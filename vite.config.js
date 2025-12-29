@@ -16,6 +16,14 @@ export default defineConfig({
   define: {
     global: 'globalThis',
   },
+  build: {
+    target: 'esnext',
+    rollupOptions: {
+      output: {
+        manualChunks: undefined,
+      },
+    },
+  },
   server: {
     host: '0.0.0.0',
     port: 5173,

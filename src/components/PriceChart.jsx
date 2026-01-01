@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useEthersProvider } from '../hooks/useEthers';
 import { getTokenPrice } from '../services/priceService';
 import { formatUSD } from '../utils/formatters';
+import { Loader2 } from 'lucide-react';
 
 const PriceChart = ({ token }) => {
   const provider = useEthersProvider();
@@ -59,7 +60,10 @@ const PriceChart = ({ token }) => {
       } catch (error) {
         console.error('Error fetching price:', error);
       } finally {
-        setLoading(false);
+        // Add small delay to show spinner briefly
+        setTimeout(() => {
+          setLoading(false);
+        }, 300);
       }
     };
 
@@ -126,11 +130,8 @@ const PriceChart = ({ token }) => {
   if (loading) {
     return (
       <div className="glass-card p-6">
-        <div className="animate-pulse">
-          <div className="h-6 bg-gray-700 rounded w-32 mb-4"></div>
-          <div className="h-8 bg-gray-700 rounded w-24 mb-2"></div>
-          <div className="h-4 bg-gray-700 rounded w-40 mb-6"></div>
-          <div className="h-48 bg-gray-700 rounded"></div>
+        <div className="flex items-center justify-center h-[400px]">
+          <Loader2 className="w-12 h-12 text-[#5a8a3a] animate-spin" />
         </div>
       </div>
     );

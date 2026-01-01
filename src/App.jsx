@@ -11,8 +11,9 @@ import Swap from './components/Swap';
 import LendBorrow from './components/LendBorrow';
 import Faucet from './components/Faucet';
 import Activity from './components/Activity';
-import { Twitter, MessageSquare } from 'lucide-react';
+import { Twitter, MessageSquare, Bell } from 'lucide-react';
 import FeedbackModal from './components/FeedbackModal';
+import ChangelogModal from './components/ChangelogModal';
 
 const queryClient = new QueryClient();
 
@@ -26,6 +27,7 @@ const config = getDefaultConfig({
 function App() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
+  const [isChangelogOpen, setIsChangelogOpen] = useState(false);
 
   React.useEffect(() => {
     const handleNavigate = (e) => {
@@ -78,39 +80,70 @@ function App() {
                 }}
               >
                 <MessageSquare className="w-4 h-4" />
-                <span>Feedbacks</span>
+                <span>Feedback</span>
               </button>
               
-              {/* Fixed Floating CTA Button */}
-              <a
-                href="https://twitter.com/heyeren_"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="fixed bottom-5 right-5 z-[1000] bg-[#5cb849] text-white px-5 py-3 rounded-full flex items-center gap-2 font-medium transition-all duration-200"
-                style={{
-                  boxShadow: '0 4px 12px rgba(92, 184, 73, 0.3), 0 0 20px rgba(92, 184, 73, 0.15)',
-                  transform: 'scaleX(0.8)',
-                  transformOrigin: 'right center'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = 'scaleX(0.8) translateY(-3px)';
-                  e.currentTarget.style.backgroundColor = '#6bc956';
-                  e.currentTarget.style.boxShadow = '0 6px 16px rgba(107, 201, 86, 0.4), 0 0 24px rgba(107, 201, 86, 0.2)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = 'scaleX(0.8) translateY(0)';
-                  e.currentTarget.style.backgroundColor = '#5cb849';
-                  e.currentTarget.style.boxShadow = '0 4px 12px rgba(92, 184, 73, 0.3), 0 0 20px rgba(92, 184, 73, 0.15)';
-                }}
-              >
-                <Twitter className="w-4 h-4" />
-                <span>Follow Up On X</span>
-              </a>
+              {/* Fixed Floating Buttons Container (Bottom Right) */}
+              <div className="fixed bottom-5 right-5 z-[1000] flex items-center gap-1">
+                {/* What's New Button */}
+                <button
+                  onClick={() => setIsChangelogOpen(true)}
+                  className="bg-[#1a1a1a] border border-[#2a2a2a] text-white px-5 py-3 rounded-full flex items-center gap-2 font-medium transition-all duration-200"
+                  style={{
+                    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.5)',
+                    transform: 'scaleX(0.8)',
+                    transformOrigin: 'right center'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = 'scaleX(0.8) translateY(-3px)';
+                    e.currentTarget.style.backgroundColor = '#222222';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = 'scaleX(0.8) translateY(0)';
+                    e.currentTarget.style.backgroundColor = '#1a1a1a';
+                  }}
+                >
+                  <Bell className="w-4 h-4 text-[#5cb849]" />
+                  <span>What's New</span>
+                </button>
+
+                {/* Fixed Floating CTA Button */}
+                <a
+                  href="https://twitter.com/heyeren_"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="bg-[#5cb849] text-white px-5 py-3 rounded-full flex items-center gap-2 font-medium transition-all duration-200"
+                  style={{
+                    boxShadow: '0 4px 12px rgba(92, 184, 73, 0.3), 0 0 20px rgba(92, 184, 73, 0.15)',
+                    transform: 'scaleX(0.8)',
+                    transformOrigin: 'right center'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = 'scaleX(0.8) translateY(-3px)';
+                    e.currentTarget.style.backgroundColor = '#6bc956';
+                    e.currentTarget.style.boxShadow = '0 6px 16px rgba(107, 201, 86, 0.4), 0 0 24px rgba(107, 201, 86, 0.2)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = 'scaleX(0.8) translateY(0)';
+                    e.currentTarget.style.backgroundColor = '#5cb849';
+                    e.currentTarget.style.boxShadow = '0 4px 12px rgba(92, 184, 73, 0.3), 0 0 20px rgba(92, 184, 73, 0.15)';
+                  }}
+                >
+                  <Twitter className="w-4 h-4" />
+                  <span>Follow on X</span>
+                </a>
+              </div>
               
               {/* Feedback Modal */}
               <FeedbackModal 
                 isOpen={isFeedbackOpen} 
                 onClose={() => setIsFeedbackOpen(false)} 
+              />
+
+              {/* Changelog Modal */}
+              <ChangelogModal
+                isOpen={isChangelogOpen}
+                onClose={() => setIsChangelogOpen(false)}
               />
             </div>
           </NotificationProvider>

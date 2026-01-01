@@ -294,6 +294,18 @@ const LendBorrow = () => {
             selectedToken={selectedToken}
             onSelect={(token) => setSelectedToken(token)}
             className="w-full"
+            balances={
+              activeTab === 'supply' || activeTab === 'repay' 
+                ? balances  // Show wallet balances for supply/repay
+                : activeTab === 'withdraw'
+                ? Object.fromEntries(
+                    LENDABLE_TOKENS.map(token => [
+                      token.symbol,
+                      formatTokenAmount(userCollateral[token.symbol] || 0n, token.decimals)
+                    ])
+                  )  // Show collateral balances for withdraw
+                : {}  // No balances for borrow
+            }
           />
           {tokenPrices[selectedToken.symbol] > 0 && (
             <p className="text-xs text-gray-500 mt-1">

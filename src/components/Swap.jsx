@@ -120,6 +120,7 @@ const Swap = () => {
               selectedToken={fromToken}
               onSelect={(token) => setFromToken(token)}
               className="w-40"
+              balances={balances}
             />
             <div className="flex-1 relative">
               <input
@@ -161,6 +162,7 @@ const Swap = () => {
               selectedToken={toToken}
               onSelect={(token) => setToToken(token)}
               className="w-40"
+              balances={balances}
             />
             <input
               type="text"

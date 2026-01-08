@@ -57,7 +57,7 @@ const ProtocolStats = () => {
     return () => clearInterval(interval);
   }, [fetchStats]);
 
-  // Generate chart dataa
+  // Generate chart data
   const getChartData = (historicalData, currentValue) => {
     if (historicalData && historicalData.length > 0) {
       return historicalData;

@@ -2,10 +2,10 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { formatUSD } from '../utils/formatters';
 import { useEthersProvider } from '../hooks/useEthers';
 import { getProtocolStats } from '../services/statsService';
+import { ArrowRightLeft, PiggyBank, Landmark, Undo2, ArrowUpFromLine, Gift } from 'lucide-react';
 
 const ProtocolStats = () => {
   const provider = useEthersProvider();
-  const [selectedPeriod, setSelectedPeriod] = useState('all');
   const [stats, setStats] = useState({
     tvl: 0,
     volume: 0,
@@ -13,30 +13,21 @@ const ProtocolStats = () => {
     historicalTVL: [],
     historicalVolume: [],
     historicalTransactions: [],
+    source: null,
+    breakdown: null,
   });
   const [loading, setLoading] = useState(true);
   const [lastUpdated, setLastUpdated] = useState(null);
   const [fetchError, setFetchError] = useState(false);
   const previousStats = useRef(null);
 
-  const periods = [
-    { label: 'All Time', value: 'all', days: null },
-    { label: '7d', value: '7d', days: 7 },
-    { label: '30d', value: '30d', days: 30 },
-    { label: '90d', value: '90d', days: 90 },
-  ];
-
-  const currentPeriod = periods.find(p => p.value === selectedPeriod) || periods[0];
-
-  // Fetch live stats from blockchain with error recovery
+  // Fetch live stats from backend + blockchain
   const fetchStats = useCallback(async (showLoading = true) => {
-    if (!provider) return;
-    
     if (showLoading) setLoading(true);
     setFetchError(false);
     
     try {
-      const data = await getProtocolStats(provider, currentPeriod.days);
+      const data = await getProtocolStats(provider);
       
       // Validate data - don't accept sudden drops to 0 if we had good data
       if (data.tvl === 0 && previousStats.current?.tvl > 0) {
@@ -52,11 +43,10 @@ const ProtocolStats = () => {
     } catch (error) {
       console.error('Error fetching protocol stats:', error);
       setFetchError(true);
-      // Keep previous stats on error
     } finally {
       setLoading(false);
     }
-  }, [provider, currentPeriod.days]);
+  }, [provider]);
 
   // Initial fetch and periodic refresh
   useEffect(() => {
@@ -67,18 +57,16 @@ const ProtocolStats = () => {
     return () => clearInterval(interval);
   }, [fetchStats]);
 
-  // Generate chart data - use historical if available, otherwise generate from current value
+  // Generate chart data
   const getChartData = (historicalData, currentValue) => {
     if (historicalData && historicalData.length > 0) {
       return historicalData;
     }
     
-    // Fallback: generate smooth chart data from current value
     const dataPoints = 20;
     const data = [];
     for (let i = 0; i < dataPoints; i++) {
       const progress = i / (dataPoints - 1);
-      // Create an upward trend ending at current value
       const value = currentValue * (0.7 + progress * 0.3);
       data.push(Math.max(0, value));
     }
@@ -89,15 +77,26 @@ const ProtocolStats = () => {
   const volumeData = getChartData(stats.historicalVolume, stats.volume);
   const txData = getChartData(stats.historicalTransactions, stats.transactions);
 
-  const StatCard = ({ title, value, formatValue, chartData, loading }) => {
+  const StatCard = ({ title, value, formatValue, chartData, loading, subtitle }) => {
     const gradientId = `gradient-${title.replace(/\s+/g, '-').toLowerCase()}`;
     
     return (
       <div className="glass-card p-6 relative overflow-hidden">
         <div className="relative z-10">
           <div className="flex items-start justify-between mb-2">
-            <p className="text-sm text-gray-400">{title}</p>
-            <p className="text-xs text-[#5a8a3a] font-medium">live data</p>
+            <div>
+              <p className="text-sm text-gray-400">{title}</p>
+              {subtitle && (
+                <p className="text-[10px] text-gray-600 mt-0.5">{subtitle}</p>
+              )}
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#5a8a3a] opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-[#5cb849]"></span>
+              </span>
+              <p className="text-xs text-[#5a8a3a] font-medium">live</p>
+            </div>
           </div>
           {loading ? (
             <div className="h-8 w-32 bg-gray-700 rounded animate-pulse" />
@@ -153,31 +152,62 @@ const ProtocolStats = () => {
     );
   };
 
+  // Transaction type breakdown card
+  const TransactionBreakdown = () => {
+    if (!stats.breakdown) return null;
+
+    const types = [
+      { key: 'swaps', label: 'Swaps', icon: ArrowRightLeft, color: 'text-blue-400' },
+      { key: 'supplies', label: 'Supplies', icon: PiggyBank, color: 'text-green-400' },
+      { key: 'withdraws', label: 'Withdraws', icon: ArrowUpFromLine, color: 'text-orange-400' },
+      { key: 'borrows', label: 'Borrows', icon: Landmark, color: 'text-yellow-400' },
+      { key: 'repays', label: 'Repays', icon: Undo2, color: 'text-purple-400' },
+      { key: 'claims', label: 'Claims', icon: Gift, color: 'text-pink-400' },
+    ];
+
+    return (
+      <div className="glass-card p-6 mt-4">
+        <h4 className="text-sm font-medium text-gray-400 mb-4">Transaction Breakdown</h4>
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+          {types.map(({ key, label, icon: Icon, color }) => (
+            <div key={key} className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-[#1a1a1a]">
+                <Icon className={`w-4 h-4 ${color}`} />
+              </div>
+              <div>
+                <p className="text-xs text-gray-500">{label}</p>
+                <p className="text-lg font-bold text-white">
+                  {stats.breakdown[key] || 0}
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
   // Manual refresh handler
   const handleRefresh = () => {
     fetchStats(true);
   };
 
+  // Get source label
+  const getSourceLabel = () => {
+    if (stats.source === 'backend') return 'Live data';
+    if (stats.source === 'onchain') return 'On-chain';
+    return 'Cached';
+  };
+
   return (
     <div className="mt-6 space-y-4">
-      {/* Period Selector */}
+      {/* Header with refresh */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-gray-400">Period:</span>
-          {periods.map((period) => (
-            <button
-              key={period.value}
-              onClick={() => setSelectedPeriod(period.value)}
-              disabled={loading}
-              className={`px-3 py-1 rounded-md text-sm font-medium transition-colors disabled:opacity-50 ${
-                selectedPeriod === period.value
-                  ? 'bg-[#5a8a3a] text-white'
-                  : 'bg-[#1a1a1a] text-gray-400 hover:text-white hover:bg-[#222222]'
-              }`}
-            >
-              {period.label}
-            </button>
-          ))}
+        <div className="flex items-center gap-3">
+          <h3 className="text-sm font-medium text-gray-400">Protocol Stats</h3>
+          <span className="px-2 py-0.5 text-[10px] font-medium bg-[#5a8a3a]/20 text-[#5cb849] rounded-full">
+            {getSourceLabel()}
+          </span>
         </div>
         <div className="flex items-center gap-3">
           {fetchError && (
@@ -206,10 +236,11 @@ const ProtocolStats = () => {
         </div>
       </div>
 
-      {/* Stats Cards */}
+      {/* Main Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <StatCard
           title="Total TVL"
+          subtitle="Lending + AMM Pools"
           value={stats.tvl}
           formatValue={formatUSD}
           chartData={tvlData}
@@ -217,6 +248,7 @@ const ProtocolStats = () => {
         />
         <StatCard
           title="Volume"
+          subtitle={stats.breakdown ? `All transaction types` : 'All transactions'}
           value={stats.volume}
           formatValue={formatUSD}
           chartData={volumeData}
@@ -224,11 +256,17 @@ const ProtocolStats = () => {
         />
         <StatCard
           title="Transactions"
+          subtitle={stats.breakdown ? 
+            `${stats.breakdown.swaps + stats.breakdown.supplies + stats.breakdown.withdraws + stats.breakdown.borrows + stats.breakdown.repays + stats.breakdown.claims} total` : 
+            'All types'}
           value={stats.transactions}
           chartData={txData}
           loading={loading}
         />
       </div>
+
+      {/* Transaction Breakdown */}
+      {!loading && <TransactionBreakdown />}
     </div>
   );
 };

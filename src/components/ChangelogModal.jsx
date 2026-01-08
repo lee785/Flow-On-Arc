@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { X, Bell, Rocket, Shield, Zap, ChevronDown, ChevronUp } from 'lucide-react';
 
 const ChangelogModal = ({ isOpen, onClose }) => {
-  const [expandedVersion, setExpandedVersion] = useState('v1.3.0');
+  const [expandedVersion, setExpandedVersion] = useState('v1.4.0');
 
   // Handle escape key
   useEffect(() => {
@@ -16,6 +16,19 @@ const ChangelogModal = ({ isOpen, onClose }) => {
   if (!isOpen) return null;
 
   const updates = [
+    {
+      version: "v1.4.0",
+      date: "January 5, 2026",
+      changes: [
+        { type: 'feature', text: 'Backend API Integration: Deployed dedicated backend on Fly.io with PostgreSQL for persistent data tracking.' },
+        { type: 'feature', text: 'Real-time Event Indexer: Backend automatically indexes all swap, supply, borrow, repay, withdraw, and faucet transactions.' },
+        { type: 'feature', text: 'Activity Tab: Live transaction feed showing all protocol activity with type filters and block explorer links.' },
+        { type: 'feature', text: 'Transaction History API: New endpoints for fetching protocol-wide and wallet-specific transaction history.' },
+        { type: 'improvement', text: 'Hybrid Data Fetching: TVL from blockchain + Volume/Transactions from backend for optimal accuracy and speed.' },
+        { type: 'improvement', text: 'Live Status Indicator: Protocol Stats and Activity tab now show animated "live" indicator.' },
+        { type: 'improvement', text: 'Transaction Breakdown: Stats display now shows detailed breakdown (swaps, supplies, borrows, etc.).' }
+      ]
+    },
     {
       version: "v1.3.0",
       date: "January 4, 2026",

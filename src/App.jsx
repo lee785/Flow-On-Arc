@@ -28,6 +28,7 @@ function App() {
   const isMaintenanceMode = false; // Set to false to disable maintenance mode
 
   const [activeTab, setActiveTab] = useState('dashboard');
+  const [lendBorrowInitialTab, setLendBorrowInitialTab] = useState('supply');
   const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
   const [isChangelogOpen, setIsChangelogOpen] = useState(false);
 
@@ -93,9 +94,9 @@ function App() {
               <div className="flex flex-1">
                 <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
                 <main className="flex-1 ml-64 p-8">
-                  {activeTab === 'dashboard' && <Dashboard />}
+                  {activeTab === 'dashboard' && <Dashboard setLendBorrowInitialTab={setLendBorrowInitialTab} setActiveTab={setActiveTab} />}
                   {activeTab === 'swap' && <Swap />}
-                  {activeTab === 'lend-borrow' && <LendBorrow />}
+                  {activeTab === 'lend-borrow' && <LendBorrow initialTab={lendBorrowInitialTab} />}
                   {activeTab === 'faucet' && <Faucet />}
                   {activeTab === 'activity' && <Activity />}
                 </main>

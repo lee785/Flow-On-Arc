@@ -24,7 +24,7 @@ import {
 import { formatTokenAmount, formatUSD } from '../utils/formatters';
 import TransactionModal from './TransactionModal';
 
-const LendBorrow = () => {
+const LendBorrow = ({ initialTab = 'supply' }) => {
   const { address, isConnected } = useAccount();
   const provider = useEthersProvider();
   const signer = useEthersSigner();
@@ -32,7 +32,14 @@ const LendBorrow = () => {
   const { prices: tokenPrices } = useTokenPrices(provider);
   const { showTransaction } = useNotifications();
 
-  const [activeTab, setActiveTab] = useState('supply');
+  const [activeTab, setActiveTab] = useState(initialTab);
+  
+  // Update activeTab when initialTab prop changes
+  useEffect(() => {
+    if (initialTab) {
+      setActiveTab(initialTab);
+    }
+  }, [initialTab]);
   const [selectedToken, setSelectedToken] = useState(LENDABLE_TOKENS[0]);
   const [amount, setAmount] = useState('');
   const [loading, setLoading] = useState(false);

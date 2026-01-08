@@ -6,13 +6,13 @@ import { getUserCollateral, getUserAccountData, getUserDebt } from '../services/
 import { formatTokenAmount, formatUSD, formatCompactNumber } from '../utils/formatters';
 import { TOKENS, LENDABLE_TOKENS } from '../constants/tokens';
 import { formatUnits } from 'ethers';
-import { Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeOff, Wallet, ArrowUpRight, TrendingUp } from 'lucide-react';
 
-const Dashboard = () => {
+const Dashboard = ({ setLendBorrowInitialTab, setActiveTab }) => {
   const { address, isConnected } = useAccount();
   const provider = useEthersProvider();
   const { balances, rawBalances, fetchBalances } = useBalances(provider, address);
-  
+
   const [showBalance, setShowBalance] = useState(true);
   const [suppliedTokens, setSuppliedTokens] = useState({});
   const [borrowedTokens, setBorrowedTokens] = useState({});
@@ -47,7 +47,7 @@ const Dashboard = () => {
         }
         setSuppliedTokens(supplied);
         setBorrowedTokens(borrowed);
-        
+
         const data = await getUserAccountData(provider, address);
         setAccountData(data);
       };
@@ -79,11 +79,11 @@ const Dashboard = () => {
   // Calculate portfolio holdings for donut chart
   const portfolioHoldings = useMemo(() => {
     const holdings = [];
-    if (catValue > 0) holdings.push({ symbol: 'CAT', value: catValue, color: '#EF4444' });
-    if (darcValue > 0) holdings.push({ symbol: 'DARC', value: darcValue, color: '#F59E0B' });
-    if (pandaValue > 0) holdings.push({ symbol: 'PANDA', value: pandaValue, color: '#8B5CF6' });
     if (usdcValue > 0) holdings.push({ symbol: 'USDC', value: usdcValue, color: '#10B981' });
-    
+    if (darcValue > 0) holdings.push({ symbol: 'DARC', value: darcValue, color: '#F59E0B' });
+    if (catValue > 0) holdings.push({ symbol: 'CAT', value: catValue, color: '#EF4444' });
+    if (pandaValue > 0) holdings.push({ symbol: 'PANDA', value: pandaValue, color: '#8B5CF6' });
+
     const total = holdings.reduce((sum, h) => sum + h.value, 0);
     return holdings.map(h => ({
       ...h,
@@ -98,19 +98,18 @@ const Dashboard = () => {
       const now = Date.now();
       const points = 24;
       const baseValue = totalWalletBalance;
-      
+
       for (let i = points - 1; i >= 0; i--) {
-        // Create a trend that reflects recent changes
         const timeOffset = (points - 1 - i) / points;
         const variation = 0.95 + (timeOffset * 0.1) + (Math.random() * 0.05);
         data.push({
-          time: now - (i * 3600000), // hourly
+          time: now - (i * 3600000),
           value: baseValue * variation,
         });
       }
       setPerformanceData(data);
     };
-    
+
     if (totalWalletBalance > 0) {
       generateData();
     }
@@ -133,266 +132,352 @@ const Dashboard = () => {
     return total;
   }, [suppliedTokens]);
 
-  // Donut chart component
-  const DonutChart = ({ data, size = 160 }) => {
+  // Calculate total borrowed value
+  const totalBorrowedValue = useMemo(() => {
+    let total = 0;
+    for (const token of LENDABLE_TOKENS) {
+      const borrowed = borrowedTokens[token.symbol] || 0n;
+      const amount = parseFloat(formatUnits(borrowed, token.decimals));
+      total += amount * (tokenPrices[token.symbol] || 0);
+    }
+    return total;
+  }, [borrowedTokens]);
+
+  // Total portfolio value (wallet + supplied - borrowed)
+  const totalPortfolioValue = totalWalletBalance + totalSuppliedValue - totalBorrowedValue;
+
+  // Handle navigation to lend/borrow tab
+  const handleDeposit = () => {
+    if (setLendBorrowInitialTab) setLendBorrowInitialTab('supply');
+    if (setActiveTab) setActiveTab('lend-borrow');
+  };
+
+  const handleWithdraw = () => {
+    if (setLendBorrowInitialTab) setLendBorrowInitialTab('withdraw');
+    if (setActiveTab) setActiveTab('lend-borrow');
+  };
+
+  // Donut chart component with total value in center
+  const DonutChart = ({ data, size = 180, totalValue }) => {
     if (data.length === 0) {
       return (
-        <div className="flex items-center justify-center w-[160px] h-[160px]">
-          <p className="text-gray-400 text-sm">No holdings</p>
+        <div className="flex items-center justify-center" style={{ width: size, height: size }}>
+          <div className="text-center">
+            <p className="text-gray-500 text-sm">No holdings</p>
+          </div>
         </div>
       );
     }
 
-    let currentAngle = -90;
-    const radius = size / 2 - 10;
+    const radius = (size / 2) - 20;
     const center = size / 2;
     const circumference = 2 * Math.PI * radius;
-    let cumulativePercentage = 0;
+    let cumulativeOffset = 0;
 
     return (
-      <svg width={size} height={size} className="transform -rotate-90">
-        {data.map((item, index) => {
-          const strokeDasharray = (item.percentage / 100) * circumference;
-          const strokeDashoffset = cumulativePercentage > 0 
-            ? -((cumulativePercentage / 100) * circumference)
-            : 0;
-          
-          cumulativePercentage += item.percentage;
-          
-          return (
-            <circle
-              key={item.symbol}
-              cx={center}
-              cy={center}
-              r={radius}
-              fill="none"
-              stroke={item.color}
-              strokeWidth="20"
-              strokeDasharray={strokeDasharray}
-              strokeDashoffset={strokeDashoffset}
-              className="transition-all duration-300"
-            />
-          );
-        })}
-      </svg>
+      <div className="relative" style={{ width: size, height: size }}>
+        <svg width={size} height={size} className="transform -rotate-90">
+          {data.map((item, index) => {
+            const strokeDasharray = (item.percentage / 100) * circumference;
+            const strokeDashoffset = -cumulativeOffset;
+            cumulativeOffset += strokeDasharray;
+
+            return (
+              <circle
+                key={item.symbol}
+                cx={center}
+                cy={center}
+                r={radius}
+                fill="none"
+                stroke={item.color}
+                strokeWidth="24"
+                strokeDasharray={`${strokeDasharray} ${circumference}`}
+                strokeDashoffset={strokeDashoffset}
+                className="transition-all duration-500"
+              />
+            );
+          })}
+        </svg>
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="text-center">
+            <p className="text-xs text-gray-500 mb-1">Total</p>
+            <p className="text-xl font-bold text-white">${formatCompactNumber(totalValue)}</p>
+          </div>
+        </div>
+      </div>
     );
   };
 
   // Performance chart component
-  const PerformanceChart = ({ data, width = 600, height = 160 }) => {
-    if (data.length === 0) return null;
-    
+  const PerformanceChart = ({ data, height = 200 }) => {
+    if (data.length === 0) {
+      return (
+        <div className="flex items-center justify-center h-full">
+          <p className="text-gray-500">No data available</p>
+        </div>
+      );
+    }
+
     const minValue = Math.min(...data.map(d => d.value));
     const maxValue = Math.max(...data.map(d => d.value));
     const range = maxValue - minValue || 1;
-    const currentValue = data.length > 0 ? data[data.length - 1].value : 0;
-    
-    // Add small padding on left and right sides, chart uses more width (40% wider than before)
-    const horizontalPadding = 8; // Minimal padding to keep chart within card
-    const chartWidth = width - (horizontalPadding * 2); // Chart uses most of available width
-    const startX = horizontalPadding;
-    const endX = startX + chartWidth;
-    
+
+    const width = 600;
+    const padding = { left: 50, right: 20, top: 20, bottom: 30 };
+    const chartWidth = width - padding.left - padding.right;
+    const chartHeight = height - padding.top - padding.bottom;
+
     const points = data.map((d, i) => {
-      const x = startX + (i / (data.length - 1)) * chartWidth;
-      const y = height - ((d.value - minValue) / range) * height;
+      const x = padding.left + (i / (data.length - 1)) * chartWidth;
+      const y = padding.top + chartHeight - ((d.value - minValue) / range) * chartHeight;
       return `${x},${y}`;
     }).join(' ');
 
-    // Generate grid lines
-    const gridLines = 5;
-    const gridLinePositions = [];
-    for (let i = 0; i <= gridLines; i++) {
-      const yRatio = i / gridLines;
-      const yPos = yRatio * height;
-      gridLinePositions.push(yPos);
+    // Y-axis labels
+    const yLabels = [];
+    for (let i = 0; i <= 4; i++) {
+      const value = minValue + (range * i / 4);
+      yLabels.push({
+        value: `$${formatCompactNumber(value)}`,
+        y: padding.top + chartHeight - (i / 4) * chartHeight,
+      });
     }
 
+    // X-axis time labels
+    const xLabels = ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00', '23:59'];
+
     return (
-      <svg width={width} height={height} className="w-full h-full" viewBox={`0 0 ${width} ${height}`}>
+      <svg width="100%" height={height} viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="xMidYMid meet">
         <defs>
-          <linearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#5a8a3a" stopOpacity="0.4" />
+          <linearGradient id="performanceGradient" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#5a8a3a" stopOpacity="0.3" />
             <stop offset="100%" stopColor="#5a8a3a" stopOpacity="0" />
           </linearGradient>
         </defs>
-        
+
+        {/* Y-axis labels */}
+        {yLabels.map((label, i) => (
+          <text
+            key={`y-${i}`}
+            x={padding.left - 8}
+            y={label.y + 4}
+            textAnchor="end"
+            className="fill-gray-600 text-[10px]"
+          >
+            {label.value}
+          </text>
+        ))}
+
         {/* Grid lines */}
-        {gridLinePositions.map((yPos, i) => (
+        {yLabels.map((label, i) => (
           <line
             key={`grid-${i}`}
-            x1={startX}
-            y1={yPos}
-            x2={endX}
-            y2={yPos}
+            x1={padding.left}
+            y1={label.y}
+            x2={width - padding.right}
+            y2={label.y}
             stroke="#2a2a2a"
-            strokeWidth="0.5"
-            opacity="0.5"
+            strokeWidth="1"
           />
         ))}
-        
-        {/* Reference line at current value */}
-        {data.length > 0 && (
-          <line
-            x1={startX}
-            y1={height - ((currentValue - minValue) / range) * height}
-            x2={endX}
-            y2={height - ((currentValue - minValue) / range) * height}
-            stroke="#5a8a3a"
-            strokeWidth="1.5"
-            strokeDasharray="4 4"
-            opacity="0.6"
-          />
-        )}
-        
+
+        {/* X-axis labels */}
+        {xLabels.map((label, i) => (
+          <text
+            key={`x-${i}`}
+            x={padding.left + (i / (xLabels.length - 1)) * chartWidth}
+            y={height - 8}
+            textAnchor="middle"
+            className="fill-gray-600 text-[10px]"
+          >
+            {label}
+          </text>
+        ))}
+
         {/* Chart area fill */}
         <polygon
-          points={`${startX},${height} ${points} ${endX},${height}`}
-          fill="url(#chartGradient)"
+          points={`${padding.left},${padding.top + chartHeight} ${points} ${width - padding.right},${padding.top + chartHeight}`}
+          fill="url(#performanceGradient)"
         />
-        
+
         {/* Chart line */}
         <polyline
           points={points}
           fill="none"
-          stroke="#5a8a3a"
-          strokeWidth="2"
+          stroke="#5cb849"
+          strokeWidth="2.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
         />
       </svg>
     );
   };
 
+  // Check if user has any borrowed tokens
+  const hasBorrowedTokens = useMemo(() => {
+    return LENDABLE_TOKENS.some(token => {
+      const borrowed = borrowedTokens[token.symbol] || 0n;
+      return borrowed > 0n;
+    });
+  }, [borrowedTokens]);
+
   return (
-    <div className="space-y-5">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold gradient-text">Dashboard</h1>
-      </div>
-
-      {/* Portfolio Balance Card */}
-      <div className="glass-card p-5">
-        <div className="flex items-center justify-between mb-3">
-          <p className="text-gray-400 text-sm">Portfolio Balance</p>
-          <button
-            onClick={() => setShowBalance(!showBalance)}
-            className="text-gray-400 hover:text-white transition-colors"
-          >
-            {showBalance ? <Eye className="w-5 h-5" /> : <EyeOff className="w-5 h-5" />}
-          </button>
-        </div>
-        <p className="text-4xl font-bold gradient-text">
-          {showBalance ? formatUSD(totalWalletBalance) : '••••••'}
-        </p>
-      </div>
-
-      {/* Portfolio Performance Card */}
-      <div className="glass-card p-5 pb-4">
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="text-xl font-semibold text-white">Portfolio Performance</h2>
-          <span className="text-xs text-gray-400">fixed data!!</span>
-        </div>
-        <div className="h-[160px] mb-2">
-          <PerformanceChart data={performanceData} />
-        </div>
-        <div className="flex gap-2">
-          {['24H', '7D', '1M', '3M', '1Y'].map(period => (
-            <button
-              key={period}
-              onClick={() => setSelectedPeriod(period)}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                selectedPeriod === period
-                  ? 'gradient-bg text-white'
-                  : 'bg-[#1a1a1a] text-gray-400 hover:text-white'
-              }`}
-            >
-              {period}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-        {/* Portfolio Holdings Card - Full Height */}
-        <div className="glass-card p-5 pb-1">
-          <h2 className="text-xl font-semibold mb-3 text-white">Portfolio Holdings</h2>
-          <div className="flex items-center justify-center mb-3">
-            <DonutChart data={portfolioHoldings} size={160} />
-          </div>
-          <div className="space-y-2">
-            {portfolioHoldings.map((holding) => (
-              <div key={holding.symbol} className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div
-                    className="w-3 h-3 rounded-full"
-                    style={{ backgroundColor: holding.color }}
-                  />
-                  <span className="text-white font-medium">{holding.symbol}</span>
-                </div>
-                <span className="text-white font-semibold">
-                  {holding.percentage.toFixed(2)}%
+    <div className="space-y-6 max-w-6xl mx-auto">
+      {/* Top Card: Total Portfolio Balance */}
+      <div className="glass-card p-6">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <div>
+            <div className="flex items-center gap-2 mb-2">
+              <p className="text-gray-400 text-sm">Total Portfolio Balance</p>
+              <button
+                onClick={() => setShowBalance(!showBalance)}
+                className="text-gray-500 hover:text-white transition-colors"
+              >
+                {showBalance ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+              </button>
+            </div>
+            <div className="flex items-center gap-3">
+              <p className="text-4xl md:text-5xl font-bold text-white">
+                {showBalance ? formatUSD(totalWalletBalance) : '••••••'}
+              </p>
+              {totalWalletBalance > 0 && (
+                <span className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-[#5a8a3a]/20 text-[#5cb849] text-sm font-medium">
+                  <TrendingUp className="w-3.5 h-3.5" />
+                  +2.4%
                 </span>
-              </div>
-            ))}
-            {portfolioHoldings.length === 0 && (
-              <p className="text-gray-400 text-sm text-center">No holdings yet</p>
-            )}
+              )}
+            </div>
+          </div>
+          <div className="flex gap-3">
+            <button
+              onClick={handleDeposit}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-xl gradient-bg text-white font-medium hover:opacity-90 transition-opacity"
+            >
+              <Wallet className="w-4 h-4" />
+              Deposit
+            </button>
+            <button
+              onClick={handleWithdraw}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-xl border border-[#2a2a2a] bg-[#111] text-white font-medium hover:bg-[#1a1a1a] transition-colors"
+            >
+              <ArrowUpRight className="w-4 h-4" />
+              Withdraw
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Middle Section: Portfolio Performance + Portfolio Holdings */}
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+        {/* Portfolio Performance Card */}
+        <div className="lg:col-span-3 glass-card p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold text-white">Portfolio Performance</h2>
+            <div className="flex gap-1 bg-[#1a1a1a] rounded-lg p-1">
+              {['24H', '7D', '1M', '3M', '1Y'].map(period => (
+                <button
+                  key={period}
+                  onClick={() => setSelectedPeriod(period)}
+                  className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${selectedPeriod === period
+                    ? 'bg-[#5a8a3a] text-white'
+                    : 'text-gray-400 hover:text-white'
+                    }`}
+                >
+                  {period}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="h-[200px]">
+            <PerformanceChart data={performanceData} height={200} />
           </div>
         </div>
 
-        {/* Right Side: Two Cards Stacked */}
-        <div className="flex flex-col gap-5">
-          {/* Supplied Tokens Card */}
-          <div className="glass-card p-5 pb-1 flex-1">
-            <h2 className="text-xl font-semibold mb-3 text-white">Supplied Tokens</h2>
-            <div className="space-y-2">
-              {LENDABLE_TOKENS.map((token) => {
-                const supplied = suppliedTokens[token.symbol] || 0n;
-                const amount = parseFloat(formatUnits(supplied, token.decimals));
-                const formattedAmount = formatCompactNumber(amount);
-                
-                return (
-                  <div key={token.symbol} className="flex items-center justify-between p-2 glass-card">
-                    <div className="flex items-center gap-3">
-                      <img src={token.icon} alt={token.symbol} className="w-8 h-8 rounded-full" />
-                      <span className="text-white font-medium">{token.symbol}</span>
-                    </div>
-                    <span className="text-white font-semibold">
-                      {formattedAmount} {token.symbol}
-                    </span>
+        {/* Portfolio Holdings Card */}
+        <div className="lg:col-span-2 glass-card p-6">
+          <h2 className="text-lg font-semibold text-white mb-4">Portfolio Holdings</h2>
+          <div className="flex flex-col items-center">
+            <DonutChart data={portfolioHoldings} size={180} totalValue={totalPortfolioValue} />
+            <div className="w-full mt-4 space-y-2">
+              {portfolioHoldings.map((holding) => (
+                <div key={holding.symbol} className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div
+                      className="w-3 h-3 rounded-full"
+                      style={{ backgroundColor: holding.color }}
+                    />
+                    <span className="text-gray-400 text-sm">{holding.symbol}</span>
                   </div>
-                );
-              })}
-              {totalSuppliedValue === 0 && (
-                <p className="text-gray-400 text-sm text-center">No tokens supplied yet</p>
+                  <span className="text-white text-sm font-medium">
+                    {holding.percentage.toFixed(2)}%
+                  </span>
+                </div>
+              ))}
+              {portfolioHoldings.length === 0 && (
+                <p className="text-gray-500 text-sm text-center py-4">No holdings yet</p>
               )}
             </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Bottom Section: Supplied Tokens + Borrowed Tokens */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Supplied Tokens Card */}
+        <div className="glass-card p-6">
+          <h2 className="text-lg font-semibold text-white mb-4">Supplied Tokens</h2>
+          <div className="space-y-3">
+            {LENDABLE_TOKENS.map((token) => {
+              const supplied = suppliedTokens[token.symbol] || 0n;
+              const amount = parseFloat(formatUnits(supplied, token.decimals));
+              const formattedAmount = formatCompactNumber(amount);
+              const usdValue = amount * (tokenPrices[token.symbol] || 0);
+
+              return (
+                <div key={token.symbol} className="flex items-center justify-between py-3 border-b border-[#1a1a1a] last:border-b-0">
+                  <div className="flex items-center gap-3">
+                    <img src={token.icon} alt={token.symbol} className="w-10 h-10 rounded-full" />
+                    <span className="text-white font-medium">{token.symbol}</span>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-white font-semibold">
+                      {formattedAmount} {token.symbol}
+                    </p>
+                    <p className="text-gray-500 text-sm">
+                      {formatUSD(usdValue)}
+                    </p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Borrowed Tokens Card */}
+        <div className="glass-card p-6">
+          <h2 className="text-lg font-semibold text-white mb-4">Borrowed Tokens</h2>
+          <div className="space-y-3">
+            {LENDABLE_TOKENS.map((token) => {
+              const borrowed = borrowedTokens[token.symbol] || 0n;
+              const amount = parseFloat(formatUnits(borrowed, token.decimals));
+              const formattedAmount = formatCompactNumber(amount);
+
+              return (
+                <div key={token.symbol} className="flex items-center justify-between py-3 border-b border-[#1a1a1a] last:border-b-0">
+                  <div className="flex items-center gap-3">
+                    <img src={token.icon} alt={token.symbol} className="w-10 h-10 rounded-full" />
+                    <span className="text-white font-medium">{token.symbol}</span>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-white font-semibold">
+                      {formattedAmount} {token.symbol}
+                    </p>
+                  </div>
+                </div>
+              );
+            })}
           </div>
 
-          {/* Borrowed Tokens Card */}
-          <div className="glass-card p-5 pb-1 flex-1">
-            <h2 className="text-xl font-semibold mb-3 text-white">Borrowed Tokens</h2>
-            <div className="space-y-2">
-              {LENDABLE_TOKENS.map((token) => {
-                const borrowed = borrowedTokens[token.symbol] || 0n;
-                const amount = parseFloat(formatUnits(borrowed, token.decimals));
-                const formattedAmount = formatCompactNumber(amount);
-                
-                return (
-                  <div key={token.symbol} className="flex items-center justify-between p-2 glass-card">
-                    <div className="flex items-center gap-3">
-                      <img src={token.icon} alt={token.symbol} className="w-8 h-8 rounded-full" />
-                      <span className="text-white font-medium">{token.symbol}</span>
-                    </div>
-                    <span className="text-white font-semibold">
-                      {formattedAmount} {token.symbol}
-                    </span>
-                  </div>
-                );
-              })}
-              {Object.values(borrowedTokens).every(v => v === 0n || !v) && (
-                <p className="text-gray-400 text-sm text-center">No tokens borrowed yet</p>
-              )}
-            </div>
-          </div>
         </div>
       </div>
     </div>

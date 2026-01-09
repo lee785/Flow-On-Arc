@@ -127,11 +127,11 @@ const Swap = () => {
 
   return (
     <div className="max-w-7xl mx-auto">
-      <h1 className="text-3xl font-bold gradient-text mb-6">Swap</h1>
+      <h1 className="text-2xl sm:text-3xl font-bold gradient-text mb-4 sm:mb-6">Swap</h1>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
         {/* Swap Form */}
-        <div className="glass-card p-6 space-y-4">
+        <div className="glass-card p-4 sm:p-6 space-y-4">
         {/* From Token */}
         <div>
           <label className="text-sm text-gray-400 mb-2 block">From</label>

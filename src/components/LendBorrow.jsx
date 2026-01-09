@@ -330,10 +330,10 @@ const LendBorrow = ({ initialTab = 'supply' }) => {
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
-      <h1 className="text-3xl font-bold gradient-text">Lend & Borrow</h1>
+      <h1 className="text-2xl sm:text-3xl font-bold gradient-text">Lend & Borrow</h1>
 
       {/* Account Overview */}
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4">
         <div className="glass-card p-4">
           <p className="text-sm text-gray-400 mb-1">Total Collateral</p>
           <p className="text-xl font-bold gradient-text">
@@ -363,12 +363,12 @@ const LendBorrow = ({ initialTab = 'supply' }) => {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-2 glass-card p-1">
+      <div className="flex gap-1 sm:gap-2 glass-card p-1 overflow-x-auto scrollbar-hide">
         {['supply', 'withdraw', 'borrow', 'repay'].map((tab) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
-            className={`flex-1 py-2 px-4 rounded-md font-medium transition-all ${
+            className={`flex-1 py-2 px-2 sm:px-4 rounded-md font-medium transition-all text-sm sm:text-base min-h-[40px] whitespace-nowrap ${
               activeTab === tab
                 ? 'gradient-bg text-white'
                 : 'text-gray-400 hover:text-white'
@@ -380,9 +380,9 @@ const LendBorrow = ({ initialTab = 'supply' }) => {
       </div>
 
       {/* Token Prices Display */}
-      <div className="glass-card p-6">
-        <h2 className="text-lg font-semibold mb-4 text-white">Token Prices</h2>
-        <div className="grid grid-cols-4 gap-3">
+      <div className="glass-card p-4 sm:p-6">
+        <h2 className="text-base sm:text-lg font-semibold mb-4 text-white">Token Prices</h2>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {LENDABLE_TOKENS.map(token => (
             <div key={token.symbol} className="flex items-center justify-center gap-3 p-3 glass-card">
               <div className="flex items-center gap-2">
@@ -398,7 +398,7 @@ const LendBorrow = ({ initialTab = 'supply' }) => {
       </div>
 
       {/* Action Form */}
-      <div className="glass-card p-6 space-y-4">
+      <div className="glass-card p-4 sm:p-6 space-y-4">
         <div>
           <label className="text-sm text-gray-400 mb-2 block">Token</label>
           <TokenSelector
@@ -483,7 +483,7 @@ const LendBorrow = ({ initialTab = 'supply' }) => {
             handleRepay
           }
           disabled={!isConnected || !amount || loading || isInsufficientBalance() || isBelowMinimum()}
-          className="w-full gradient-bg text-white py-3 rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:opacity-90 transition-opacity shadow-md"
+          className="w-full gradient-bg text-white py-3 rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:opacity-90 transition-opacity shadow-md min-h-[44px] text-sm sm:text-base"
         >
           {getButtonText()}
         </button>

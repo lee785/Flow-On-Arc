@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { X, Bell, Rocket, Shield, Zap, ChevronDown, ChevronUp } from 'lucide-react';
 
 const ChangelogModal = ({ isOpen, onClose }) => {
-  const [expandedVersion, setExpandedVersion] = useState('v1.4.4');
+  const [expandedVersion, setExpandedVersion] = useState('v1.4.5');
 
   // Handle escape key
   useEffect(() => {
@@ -16,6 +16,19 @@ const ChangelogModal = ({ isOpen, onClose }) => {
   if (!isOpen) return null;
 
   const updates = [
+    {
+      version: "v1.4.5",
+      date: "January 9, 2026",
+      changes: [
+        { type: 'feature', text: 'Quick Percentage Buttons: Added 20%, 50%, and MAX (100%) buttons to Swap and Lend/Borrow components for quick amount selection. Users can instantly set a portion of their balance without typing.' },
+        { type: 'improvement', text: 'Amount Input Cleaning: All transaction amounts are now automatically cleaned (commas removed) before being sent to smart contracts, preventing transaction failures due to formatting issues.' },
+        { type: 'fix', text: 'Fixed withdraw transactions failing due to amount formatting. Withdrawals now work correctly when clicking available amounts.' },
+        { type: 'fix', text: 'Fixed borrow transactions failing due to amount parsing issues. Borrowing now works correctly with proper amount validation.' },
+        { type: 'improvement', text: 'Enhanced Error Handling: Added user-friendly error messages for transaction failures, including liquidation warnings and insufficient collateral notifications.' },
+        { type: 'improvement', text: 'Input Validation: Improved input field validation to prevent commas and invalid characters from being entered, ensuring clean amount values.' },
+        { type: 'improvement', text: 'Consistent Amount Handling: All transaction functions (supply, withdraw, borrow, repay, swap) now use consistent amount cleaning and validation logic.' }
+      ]
+    },
     {
       version: "v1.4.4",
       date: "January 9, 2026",

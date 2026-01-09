@@ -11,7 +11,7 @@ import Swap from './components/Swap';
 import LendBorrow from './components/LendBorrow';
 import Faucet from './components/Faucet';
 import Activity from './components/Activity';
-import { Twitter, MessageSquare, Bell } from 'lucide-react';
+import { Twitter, MessageSquare, Bell, Menu } from 'lucide-react';
 import FeedbackModal from './components/FeedbackModal';
 import ChangelogModal from './components/ChangelogModal';
 
@@ -19,7 +19,7 @@ const queryClient = new QueryClient();
 
 const config = getDefaultConfig({
   appName: 'Flow On Arc',
-  projectId: 'd74f676fe32bb531fb9268bbd4e43a8f',
+  projectId: import.meta.env.VITE_WALLET_CONNECT_PROJECT_ID || 'd74f676fe32bb531fb9268bbd4e43a8f',
   chains: [ARC_TESTNET],
   ssr: false,
 });
@@ -31,6 +31,7 @@ function App() {
   const [lendBorrowInitialTab, setLendBorrowInitialTab] = useState('supply');
   const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
   const [isChangelogOpen, setIsChangelogOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   React.useEffect(() => {
     const handleNavigate = (e) => {
@@ -91,9 +92,27 @@ function App() {
         <RainbowKitProvider>
           <NotificationProvider>
             <div className="flex flex-col min-h-screen bg-black">
-              <div className="flex flex-1">
-                <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
-                <main className="flex-1 ml-64 p-8">
+              {/* Mobile Header with Hamburger */}
+              <div className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-black border-b border-[#1a1a1a] p-4 flex items-center justify-between">
+                <button
+                  onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                  className="p-2 rounded-lg bg-[#1a1a1a] hover:bg-[#252525] transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
+                  aria-label="Toggle menu"
+                >
+                  <Menu className="w-6 h-6 text-white" />
+                </button>
+                <h1 className="text-xl font-bold gradient-text">Flow On Arc</h1>
+                <div className="w-10" /> {/* Spacer for centering */}
+              </div>
+              
+              <div className="flex flex-1 pt-16 lg:pt-0">
+                <Sidebar 
+                  activeTab={activeTab} 
+                  setActiveTab={setActiveTab}
+                  isMobileOpen={isMobileMenuOpen}
+                  setIsMobileOpen={setIsMobileMenuOpen}
+                />
+                <main className="flex-1 lg:ml-64 p-4 lg:p-8 w-full max-w-full overflow-x-hidden">
                   {activeTab === 'dashboard' && <Dashboard setLendBorrowInitialTab={setLendBorrowInitialTab} setActiveTab={setActiveTab} />}
                   {activeTab === 'swap' && <Swap />}
                   {activeTab === 'lend-borrow' && <LendBorrow initialTab={lendBorrowInitialTab} />}
@@ -102,15 +121,15 @@ function App() {
                 </main>
               </div>
               
-              {/* Footer */}
-              <footer className="ml-64 py-4 px-8 border-t border-[#1a1a1a]">
+              {/* Footer - responsive */}
+              <footer className="lg:ml-64 py-4 px-4 lg:px-8 border-t border-[#1a1a1a]">
                 <p className="text-sm text-gray-400 text-center">Flow On ARC © 2025</p>
               </footer>
               
-              {/* Fixed Floating Feedback Button - Top Right */}
+              {/* Fixed Floating Feedback Button - Top Right (Hidden on mobile) */}
               <button
                 onClick={() => setIsFeedbackOpen(true)}
-                className="fixed top-5 right-5 z-[1000] bg-[#5cb849] text-white px-5 py-3 rounded-full flex items-center gap-2 font-medium transition-all duration-200"
+                className="hidden lg:flex fixed top-5 right-5 z-[1000] bg-[#5cb849] text-white px-5 py-3 rounded-full items-center gap-2 font-medium transition-all duration-200 min-h-[44px]"
                 style={{
                   boxShadow: '0 4px 12px rgba(92, 184, 73, 0.3), 0 0 20px rgba(92, 184, 73, 0.15)',
                   transform: 'scaleX(0.8)',
@@ -131,8 +150,8 @@ function App() {
                 <span>Feedback</span>
               </button>
               
-              {/* Fixed Floating Buttons Container (Bottom Right) */}
-              <div className="fixed bottom-5 right-5 z-[1000] flex items-center gap-1">
+              {/* Fixed Floating Buttons Container (Bottom Right - Hidden on mobile) */}
+              <div className="hidden lg:flex fixed bottom-5 right-5 z-[1000] items-center gap-1">
                 {/* What's New Button */}
                 <button
                   onClick={() => setIsChangelogOpen(true)}

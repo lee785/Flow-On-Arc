@@ -55,6 +55,7 @@ const LendBorrow = ({ initialTab = 'supply' }) => {
   const [userDebt, setUserDebt] = useState({});
 
   const MINIMUM_SUPPLY_USD = 5;
+  const LTV = 0.8; // 80% Loan-to-Value ratio
 
   useEffect(() => {
     if (provider && address) {
@@ -97,6 +98,71 @@ const LendBorrow = ({ initialTab = 'supply' }) => {
     } catch (error) {
       console.error('Error fetching account data:', error);
     }
+  };
+
+  // Calculate max withdrawable amount per token based on free collateral
+  const getMaxWithdrawable = (token) => {
+    if (!accountData || !userCollateral || !tokenPrices[token.symbol]) {
+      return 0n;
+    }
+
+    const totalCollateralUSD = Number(accountData.totalCollateralUSD) / 1e18;
+    const totalDebtUSD = Number(accountData.totalDebtUSD) / 1e18;
+    
+    // If no debt, can withdraw everything
+    if (totalDebtUSD === 0) {
+      return userCollateral[token.symbol] || 0n;
+    }
+
+    // Calculate free collateral in USD
+    // LTV is 80%, so we need: Debt / 0.8 = collateral needed
+    // Free collateral = Total Collateral - (Debt / 0.8)
+    const requiredCollateralUSD = totalDebtUSD / LTV;
+    const freeCollateralUSD = Math.max(0, totalCollateralUSD - requiredCollateralUSD);
+
+    // If no free collateral, return 0
+    if (freeCollateralUSD <= 0) {
+      return 0n;
+    }
+
+    // Get this token's collateral value in USD
+    const tokenCollateral = userCollateral[token.symbol] || 0n;
+    const tokenCollateralAmount = Number(tokenCollateral) / (10 ** token.decimals);
+    const tokenCollateralUSD = tokenCollateralAmount * (tokenPrices[token.symbol] || 0);
+
+    // Calculate this token's share of total collateral
+    const tokenShare = totalCollateralUSD > 0 ? tokenCollateralUSD / totalCollateralUSD : 0;
+    
+    // Calculate free collateral for this token
+    const tokenFreeCollateralUSD = freeCollateralUSD * tokenShare;
+    
+    // Convert back to token amount
+    const tokenPrice = tokenPrices[token.symbol] || 0;
+    if (tokenPrice === 0) return 0n;
+    
+    const tokenFreeAmount = tokenFreeCollateralUSD / tokenPrice;
+    const maxWithdrawable = BigInt(Math.floor(tokenFreeAmount * (10 ** token.decimals)));
+
+    // Don't exceed actual collateral
+    return maxWithdrawable > tokenCollateral ? tokenCollateral : maxWithdrawable;
+  };
+
+  // Get available borrow amount in selected token
+  const getAvailableBorrowInToken = () => {
+    if (!accountData || !selectedToken || !tokenPrices[selectedToken.symbol]) {
+      return '0.00';
+    }
+    
+    const availableBorrowUSD = Number(accountData.availableBorrowsUSD) / 1e18;
+    const tokenPrice = tokenPrices[selectedToken.symbol] || 0;
+    
+    if (tokenPrice === 0) return '0.00';
+    
+    const availableInToken = availableBorrowUSD / tokenPrice;
+    return formatTokenAmount(
+      BigInt(Math.floor(availableInToken * (10 ** selectedToken.decimals))),
+      selectedToken.decimals
+    );
   };
 
   const handleSupply = async () => {
@@ -217,9 +283,11 @@ const LendBorrow = ({ initialTab = 'supply' }) => {
     if (activeTab === 'supply') {
       setAmount((balances[selectedToken.symbol] || '0').replace(/,/g, ''));
     } else if (activeTab === 'withdraw') {
-      setAmount(formatTokenAmount(userCollateral[selectedToken.symbol] || 0n, selectedToken.decimals).replace(/,/g, ''));
+      const maxWithdrawable = getMaxWithdrawable(selectedToken);
+      setAmount(formatTokenAmount(maxWithdrawable, selectedToken.decimals).replace(/,/g, ''));
     } else if (activeTab === 'borrow') {
-      setAmount(formatTokenAmount(accountData.availableBorrowsUSD || 0n, 18).replace(/,/g, ''));
+      // Show available borrow in selected token, not USD
+      setAmount(getAvailableBorrowInToken().replace(/,/g, ''));
     } else if (activeTab === 'repay') {
       setAmount(formatTokenAmount(userDebt[selectedToken.symbol] || 0n, selectedToken.decimals).replace(/,/g, ''));
     }
@@ -232,8 +300,9 @@ const LendBorrow = ({ initialTab = 'supply' }) => {
       return parseFloat(amount) > parseFloat((balances[selectedToken.symbol] || '0').replace(/,/g, ''));
     }
     if (activeTab === 'withdraw') {
-      const supplied = formatTokenAmount(userCollateral[selectedToken.symbol] || 0n, selectedToken.decimals);
-      return parseFloat(amount) > parseFloat(supplied.replace(/,/g, ''));
+      const maxWithdrawable = getMaxWithdrawable(selectedToken);
+      const maxWithdrawableFormatted = formatTokenAmount(maxWithdrawable, selectedToken.decimals);
+      return parseFloat(amount) > parseFloat(maxWithdrawableFormatted.replace(/,/g, ''));
     }
     if (activeTab === 'borrow') {
       const availableUSD = Number(accountData.availableBorrowsUSD) / 1e18;
@@ -342,11 +411,14 @@ const LendBorrow = ({ initialTab = 'supply' }) => {
                 ? balances  // Show wallet balances for supply/repay
                 : activeTab === 'withdraw'
                 ? Object.fromEntries(
-                    LENDABLE_TOKENS.map(token => [
-                      token.symbol,
-                      formatTokenAmount(userCollateral[token.symbol] || 0n, token.decimals)
-                    ])
-                  )  // Show collateral balances for withdraw
+                    LENDABLE_TOKENS.map(token => {
+                      const maxWithdrawable = getMaxWithdrawable(token);
+                      return [
+                        token.symbol,
+                        formatTokenAmount(maxWithdrawable, token.decimals)
+                      ];
+                    })
+                  )  // Show available withdrawable amounts (not full collateral)
                 : {}  // No balances for borrow
             }
           />
@@ -376,8 +448,26 @@ const LendBorrow = ({ initialTab = 'supply' }) => {
           </div>
           <p className={`text-xs mt-1 ${isInsufficientBalance() || isBelowMinimum() ? 'text-red-400' : 'text-gray-500'}`}>
             {activeTab === 'supply' && `Balance: ${balances[selectedToken.symbol] || '0.00'}`}
-            {activeTab === 'withdraw' && `Supplied: ${formatTokenAmount(userCollateral[selectedToken.symbol] || 0n, selectedToken.decimals)}`}
-            {activeTab === 'borrow' && `Available: ${formatUSD(Number(accountData.availableBorrowsUSD) / 1e18)}`}
+            {activeTab === 'withdraw' && (
+              <>
+                <span className="block">
+                  Supplied: {formatTokenAmount(userCollateral[selectedToken.symbol] || 0n, selectedToken.decimals)} {selectedToken.symbol}
+                </span>
+                <span className="block text-[#5a8a3a]">
+                  Available to withdraw: {formatTokenAmount(getMaxWithdrawable(selectedToken), selectedToken.decimals)} {selectedToken.symbol}
+                </span>
+              </>
+            )}
+            {activeTab === 'borrow' && (
+              <>
+                <span className="block">
+                  Available: {formatUSD(Number(accountData.availableBorrowsUSD) / 1e18)} USD
+                </span>
+                <span className="block text-[#5a8a3a]">
+                  ≈ {getAvailableBorrowInToken()} {selectedToken.symbol}
+                </span>
+              </>
+            )}
             {activeTab === 'repay' && `Borrowed: ${formatTokenAmount(userDebt[selectedToken.symbol] || 0n, selectedToken.decimals)}`}
             {isBelowMinimum() && tokenPrices[selectedToken.symbol] && (
               <span className="block mt-1">Minimum supply: ${MINIMUM_SUPPLY_USD} USD</span>

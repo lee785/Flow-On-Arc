@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { X, Bell, Rocket, Shield, Zap, ChevronDown, ChevronUp } from 'lucide-react';
 
 const ChangelogModal = ({ isOpen, onClose }) => {
-  const [expandedVersion, setExpandedVersion] = useState('v1.4.2');
+  const [expandedVersion, setExpandedVersion] = useState('v1.4.3');
 
   // Handle escape key
   useEffect(() => {
@@ -16,6 +16,17 @@ const ChangelogModal = ({ isOpen, onClose }) => {
   if (!isOpen) return null;
 
   const updates = [
+    {
+      version: "v1.4.3",
+      date: "January 9, 2026",
+      changes: [
+        { type: 'improvement', text: 'Smart Withdraw Logic: Withdraw section now shows only available (free) collateral amounts, not the full supplied amount. Prevents users from attempting withdrawals that would cause liquidation.' },
+        { type: 'improvement', text: 'Token-Based Withdraw Display: Withdraw amounts are displayed in tokens (e.g., 666.66 CAT) instead of USD for clarity, matching user expectations.' },
+        { type: 'improvement', text: 'Proportional Collateral Distribution: Free collateral is calculated and distributed proportionally across all supplied tokens based on their share of total collateral.' },
+        { type: 'improvement', text: 'Enhanced Borrow Display: Borrow section now shows both USD and token equivalent amounts for better user understanding.' },
+        { type: 'fix', text: 'Fixed withdraw validation to prevent withdrawals exceeding free collateral, ensuring users maintain the required 80% LTV ratio.' }
+      ]
+    },
     {
       version: "v1.4.2",
       date: "January 8, 2026",

@@ -11,7 +11,7 @@ import Swap from './components/Swap';
 import LendBorrow from './components/LendBorrow';
 import Faucet from './components/Faucet';
 import Activity from './components/Activity';
-import { Twitter, MessageSquare, Bell, Menu } from 'lucide-react';
+import { Twitter, MessageSquare, Bell, Menu, Plus, X } from 'lucide-react';
 import FeedbackModal from './components/FeedbackModal';
 import ChangelogModal from './components/ChangelogModal';
 
@@ -32,6 +32,7 @@ function App() {
   const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
   const [isChangelogOpen, setIsChangelogOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isMobileActionMenuOpen, setIsMobileActionMenuOpen] = useState(false);
 
   React.useEffect(() => {
     const handleNavigate = (e) => {
@@ -126,7 +127,79 @@ function App() {
                 <p className="text-sm text-gray-400 text-center">Flow On ARC © 2025</p>
               </footer>
               
-              {/* Fixed Floating Feedback Button - Top Right (Hidden on mobile) */}
+              {/* Mobile Action Menu Overlay */}
+              {isMobileActionMenuOpen && (
+                <div 
+                  className="lg:hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-[999] transition-opacity"
+                  onClick={() => setIsMobileActionMenuOpen(false)}
+                />
+              )}
+
+              {/* Mobile Floating Action Menu */}
+              <div className="lg:hidden fixed bottom-5 right-5 z-[1000]">
+                {/* Expanded Menu */}
+                {isMobileActionMenuOpen && (
+                  <div className="absolute bottom-16 right-0 flex flex-col gap-3 mb-2 mobile-action-menu">
+                    {/* Feedback Button - Icon Only */}
+                    <button
+                      onClick={() => {
+                        setIsFeedbackOpen(true);
+                        setIsMobileActionMenuOpen(false);
+                      }}
+                      className="w-12 h-12 rounded-full bg-[#5cb849] text-white flex items-center justify-center shadow-lg shadow-[#5cb849]/30 min-h-[48px] min-w-[48px] hover:bg-[#6bc956] transition-colors"
+                      aria-label="Feedback"
+                      title="Feedback"
+                    >
+                      <MessageSquare className="w-5 h-5" />
+                    </button>
+
+                    {/* What's New Button - Icon Only */}
+                    <button
+                      onClick={() => {
+                        setIsChangelogOpen(true);
+                        setIsMobileActionMenuOpen(false);
+                      }}
+                      className="w-12 h-12 rounded-full bg-[#1a1a1a] border border-[#2a2a2a] text-white flex items-center justify-center shadow-lg min-h-[48px] min-w-[48px] hover:bg-[#222222] transition-colors"
+                      aria-label="What's New"
+                      title="What's New"
+                    >
+                      <Bell className="w-5 h-5 text-[#5cb849]" />
+                    </button>
+
+                    {/* Follow Button - Icon Only */}
+                    <a
+                      href="https://twitter.com/heyeren_"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={() => setIsMobileActionMenuOpen(false)}
+                      className="w-12 h-12 rounded-full bg-[#5cb849] text-white flex items-center justify-center shadow-lg shadow-[#5cb849]/30 min-h-[48px] min-w-[48px] hover:bg-[#6bc956] transition-colors"
+                      aria-label="Follow on X"
+                      title="Follow on X"
+                    >
+                      <Twitter className="w-5 h-5" />
+                    </a>
+                  </div>
+                )}
+
+                {/* Main FAB Button */}
+                <button
+                  onClick={() => setIsMobileActionMenuOpen(!isMobileActionMenuOpen)}
+                  className={`w-14 h-14 rounded-full flex items-center justify-center transition-all duration-300 shadow-lg min-h-[56px] min-w-[56px] ${
+                    isMobileActionMenuOpen
+                      ? 'bg-[#ef4444] hover:bg-[#dc2626] rotate-45'
+                      : 'bg-[#5cb849] hover:bg-[#6bc956] shadow-[#5cb849]/30'
+                  }`}
+                  aria-label="Toggle action menu"
+                >
+                  {isMobileActionMenuOpen ? (
+                    <X className="w-6 h-6 text-white" />
+                  ) : (
+                    <Plus className="w-6 h-6 text-white" />
+                  )}
+                </button>
+              </div>
+              
+              {/* Fixed Floating Feedback Button - Top Right (Desktop only) */}
               <button
                 onClick={() => setIsFeedbackOpen(true)}
                 className="hidden lg:flex fixed top-5 right-5 z-[1000] bg-[#5cb849] text-white px-5 py-3 rounded-full items-center gap-2 font-medium transition-all duration-200 min-h-[44px]"

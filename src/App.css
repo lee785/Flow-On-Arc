@@ -168,3 +168,18 @@ body {
   display: none;  /* Chrome, Safari and Opera */
 }
 
+/* Mobile Action Menu Animation */
+@keyframes slide-in-from-bottom {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.mobile-action-menu {
+  animation: slide-in-from-bottom 0.3s ease-out;
+}

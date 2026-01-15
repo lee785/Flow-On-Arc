@@ -37,23 +37,60 @@ const Dashboard = ({ setLendBorrowInitialTab, setActiveTab }) => {
   useEffect(() => {
     if (provider && address) {
       const fetchData = async () => {
-        const supplied = {};
-        const borrowed = {};
-        for (const token of LENDABLE_TOKENS) {
-          const collateral = await getUserCollateral(provider, address, token.address);
-          const debt = await getUserDebt(provider, address, token.address);
-          supplied[token.symbol] = collateral;
-          borrowed[token.symbol] = debt;
-        }
-        setSuppliedTokens(supplied);
-        setBorrowedTokens(borrowed);
+        // Don't fetch if page is hidden (mobile background)
+        if (document.hidden) return;
+        
+        try {
+          const supplied = {};
+          const borrowed = {};
+          for (const token of LENDABLE_TOKENS) {
+            try {
+              const collateral = await getUserCollateral(provider, address, token.address);
+              const debt = await getUserDebt(provider, address, token.address);
+              supplied[token.symbol] = collateral;
+              borrowed[token.symbol] = debt;
+            } catch (error) {
+              console.error(`Error fetching data for ${token.symbol}:`, error);
+              // Set defaults on error to prevent crashes
+              supplied[token.symbol] = 0n;
+              borrowed[token.symbol] = 0n;
+            }
+          }
+          setSuppliedTokens(supplied);
+          setBorrowedTokens(borrowed);
 
-        const data = await getUserAccountData(provider, address);
-        setAccountData(data);
+          try {
+            const data = await getUserAccountData(provider, address);
+            setAccountData(data);
+          } catch (error) {
+            console.error('Error fetching account data:', error);
+            // Keep previous account data on error - don't crash
+          }
+        } catch (error) {
+          console.error('Error in fetchData:', error);
+          // Don't crash - just log the error
+        }
       };
+      
       fetchData();
-      const interval = setInterval(fetchData, 10000);
-      return () => clearInterval(interval);
+      
+      // Increase interval on mobile to reduce load (30 seconds instead of 10)
+      const isMobile = window.innerWidth < 768;
+      const intervalTime = isMobile ? 30000 : 10000;
+      const interval = setInterval(fetchData, intervalTime);
+      
+      // Also listen for visibility changes to fetch when page becomes visible
+      const handleVisibilityChange = () => {
+        if (!document.hidden) {
+          fetchData();
+        }
+      };
+      document.addEventListener('visibilitychange', handleVisibilityChange);
+      
+      return () => {
+        clearInterval(interval);
+        document.removeEventListener('visibilitychange', handleVisibilityChange);
+      };
     }
   }, [provider, address]);
 
@@ -94,30 +131,43 @@ const Dashboard = ({ setLendBorrowInitialTab, setActiveTab }) => {
   // Generate performance chart data (updates when balance changes)
   useEffect(() => {
     const generateData = () => {
-      const data = [];
-      const now = Date.now();
-      const points = 24;
-      const baseValue = totalWalletBalance;
+      // Skip if page is hidden (mobile background)
+      if (document.hidden) return;
+      
+      try {
+        const data = [];
+        const now = Date.now();
+        const points = 24;
+        const baseValue = totalWalletBalance;
 
-      for (let i = points - 1; i >= 0; i--) {
-        const timeOffset = (points - 1 - i) / points;
-        const variation = 0.95 + (timeOffset * 0.1) + (Math.random() * 0.05);
-        data.push({
-          time: now - (i * 3600000),
-          value: baseValue * variation,
-        });
+        for (let i = points - 1; i >= 0; i--) {
+          const timeOffset = (points - 1 - i) / points;
+          const variation = 0.95 + (timeOffset * 0.1) + (Math.random() * 0.05);
+          data.push({
+            time: now - (i * 3600000),
+            value: baseValue * variation,
+          });
+        }
+        setPerformanceData(data);
+      } catch (error) {
+        console.error('Error generating performance data:', error);
+        // Don't crash - keep previous data
       }
-      setPerformanceData(data);
     };
 
     if (totalWalletBalance > 0) {
       generateData();
     }
+    
+    // Increase interval on mobile (2 minutes instead of 1 minute) to reduce load
+    const isMobile = window.innerWidth < 768;
+    const intervalTime = isMobile ? 120000 : 60000;
     const interval = setInterval(() => {
-      if (totalWalletBalance > 0) {
+      if (totalWalletBalance > 0 && !document.hidden) {
         generateData();
       }
-    }, 60000);
+    }, intervalTime);
+    
     return () => clearInterval(interval);
   }, [totalWalletBalance]);
 

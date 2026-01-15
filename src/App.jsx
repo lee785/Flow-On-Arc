@@ -16,6 +16,7 @@ import { Twitter, MessageSquare, Bell, Menu, Plus, X } from 'lucide-react';
 import FeedbackModal from './components/FeedbackModal';
 import ChangelogModal from './components/ChangelogModal';
 import LandingPage from './components/LandingPage';
+import ErrorBoundary from './components/ErrorBoundary';
 
 const queryClient = new QueryClient();
 
@@ -313,16 +314,18 @@ function App() {
   }
 
   return (
-    <WagmiProvider config={config}>
-      <QueryClientProvider client={queryClient}>
-        <RainbowKitProvider>
-          <Routes>
-            <Route path="/" element={<LandingPage />} />
-            <Route path="/*" element={<AppLayout />} />
-          </Routes>
-        </RainbowKitProvider>
-      </QueryClientProvider>
-    </WagmiProvider>
+    <ErrorBoundary>
+      <WagmiProvider config={config}>
+        <QueryClientProvider client={queryClient}>
+          <RainbowKitProvider>
+            <Routes>
+              <Route path="/" element={<LandingPage />} />
+              <Route path="/*" element={<AppLayout />} />
+            </Routes>
+          </RainbowKitProvider>
+        </QueryClientProvider>
+      </WagmiProvider>
+    </ErrorBoundary>
   );
 }
 

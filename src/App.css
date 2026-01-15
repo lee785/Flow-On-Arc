@@ -8,7 +8,8 @@
   box-sizing: border-box;
 }
 
-html, body {
+html,
+body {
   width: 100%;
   height: 100%;
   min-height: 100vh;
@@ -60,8 +61,8 @@ body {
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   border: 1px solid rgba(90, 138, 58, 0.08);
-  border-radius: 12px;
-  box-shadow: 
+  border-radius: 28px;
+  box-shadow:
     0 2px 8px 0 rgba(0, 0, 0, 0.3),
     0 0 0 1px rgba(90, 138, 58, 0.05),
     0 0 12px rgba(90, 138, 58, 0.03);
@@ -71,7 +72,7 @@ body {
 
 .glass-card:hover {
   transform: translateY(-1px);
-  box-shadow: 
+  box-shadow:
     0 4px 12px 0 rgba(0, 0, 0, 0.35),
     0 0 0 1px rgba(90, 138, 58, 0.12),
     0 0 16px rgba(90, 138, 58, 0.05);
@@ -135,6 +136,7 @@ body {
     transform: translateX(100%);
     opacity: 0;
   }
+
   to {
     transform: translateX(0);
     opacity: 1;
@@ -149,6 +151,7 @@ body {
   from {
     width: 0%;
   }
+
   to {
     width: 100%;
   }
@@ -160,26 +163,127 @@ body {
 
 /* Hide scrollbar utility */
 .scrollbar-hide {
-  -ms-overflow-style: none;  /* IE and Edge */
-  scrollbar-width: none;  /* Firefox */
+  -ms-overflow-style: none;
+  /* IE and Edge */
+  scrollbar-width: none;
+  /* Firefox */
 }
 
 .scrollbar-hide::-webkit-scrollbar {
-  display: none;  /* Chrome, Safari and Opera */
+  display: none;
+  /* Chrome, Safari and Opera */
 }
 
-/* Mobile Action Menu Animation */
-@keyframes slide-in-from-bottom {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
+/* Chain/Network Pattern Background */
+.grid-pattern {
+  background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M50 0 L100 50 L50 100 L0 50 Z' fill='none' stroke='rgba(34,197,94,0.12)' stroke-width='1.5'/%3E%3Ccircle cx='50' cy='0' r='3' fill='rgba(34,197,94,0.25)'/%3E%3Ccircle cx='0' cy='50' r='3' fill='rgba(34,197,94,0.25)'/%3E%3C/svg%3E");
+  background-size: 120px 120px;
+}
+
+/* Enhanced Glass Card for Redesign */
+.redesign-card {
+  background: rgba(13, 20, 13, 0.8);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(34, 197, 94, 0.1);
+  border-radius: 2rem;
+  transition: all 0.3s ease;
+}
+
+.redesign-card:hover {
+  border-color: rgba(34, 197, 94, 0.3);
+  background: rgba(13, 20, 13, 0.9);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 30px -10px rgba(34, 197, 94, 0.2);
+}
+
+/* Re-using and cleaning up existing styles */
+.gradient-text-green {
+  background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+@keyframes scroll-ltr {
+  0% {
+    transform: translateX(-100%);
+    left: 0;
   }
-  to {
+
+  100% {
+    transform: translateX(0);
+    left: 100%;
+  }
+}
+
+@keyframes scroll-rtl {
+  0% {
+    transform: translateX(0);
+    left: 100%;
+  }
+
+  100% {
+    transform: translateX(-100%);
+    left: 0;
+  }
+}
+
+.animate-scroll-ltr {
+  position: absolute;
+  white-space: nowrap;
+  animation: scroll-ltr 30s linear infinite;
+}
+
+.animate-scroll-ltr-slow {
+  position: absolute;
+  white-space: nowrap;
+  animation: scroll-ltr 60s linear infinite;
+}
+
+.animate-scroll-rtl-slow {
+  position: absolute;
+  white-space: nowrap;
+  animation: scroll-rtl 60s linear infinite;
+}
+
+@keyframes fade-alternate-top {
+
+  0%,
+  45% {
     opacity: 1;
-    transform: translateY(0);
+  }
+
+  55%,
+  95% {
+    opacity: 0.4;
+  }
+
+  100% {
+    opacity: 1;
   }
 }
 
-.mobile-action-menu {
-  animation: slide-in-from-bottom 0.3s ease-out;
+@keyframes fade-alternate-bottom {
+
+  0%,
+  45% {
+    opacity: 0.4;
+  }
+
+  55%,
+  95% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0.4;
+  }
+}
+
+.animate-alternate-top {
+  animation: fade-alternate-top 30s ease-in-out infinite;
+}
+
+.animate-alternate-bottom {
+  animation: fade-alternate-bottom 30s ease-in-out infinite;
 }

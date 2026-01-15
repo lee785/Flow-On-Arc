@@ -62,3 +62,21 @@ export function formatCompactNumber(amount) {
   });
 }
 
+// Format USD in compact format ($5.76M, $1.84M, etc.)
+export function formatCompactUSD(amount) {
+  if (!amount || amount === 0) return '$0.00';
+  const num = typeof amount === 'bigint' ? Number(amount) : amount;
+  
+  if (num >= 1000000) {
+    const millions = num / 1000000;
+    return '$' + millions.toFixed(2).replace(/\.?0+$/, '') + 'M';
+  }
+  if (num >= 1000) {
+    const thousands = num / 1000;
+    return '$' + thousands.toFixed(2).replace(/\.?0+$/, '') + 'k';
+  }
+  return '$' + num.toLocaleString('en-US', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+}

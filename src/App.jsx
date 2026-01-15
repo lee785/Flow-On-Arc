@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { WagmiProvider } from 'wagmi';
 import { getDefaultConfig, RainbowKitProvider } from '@rainbow-me/rainbowkit';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -14,6 +15,7 @@ import Activity from './components/Activity';
 import { Twitter, MessageSquare, Bell, Menu, Plus, X } from 'lucide-react';
 import FeedbackModal from './components/FeedbackModal';
 import ChangelogModal from './components/ChangelogModal';
+import LandingPage from './components/LandingPage';
 
 const queryClient = new QueryClient();
 
@@ -24,10 +26,10 @@ const config = getDefaultConfig({
   ssr: false,
 });
 
-function App() {
-  const isMaintenanceMode = false; // Set to false to disable maintenance mode
-
-  const [activeTab, setActiveTab] = useState('dashboard');
+// Main App Layout Component
+function AppLayout() {
+  const location = useLocation();
+  const navigate = useNavigate();
   const [lendBorrowInitialTab, setLendBorrowInitialTab] = useState('supply');
   const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
   const [isChangelogOpen, setIsChangelogOpen] = useState(false);
@@ -36,62 +38,24 @@ function App() {
 
   React.useEffect(() => {
     const handleNavigate = (e) => {
-      setActiveTab(e.detail);
+      const tab = e.detail;
+      const pathMap = {
+        'dashboard': '/dashboard',
+        'swap': '/swap',
+        'lend-borrow': '/lend-borrow',
+        'faucet': '/faucet',
+        'activity': '/activity'
+      };
+      if (pathMap[tab]) {
+        navigate(pathMap[tab]);
+      }
     };
     window.addEventListener('navigate', handleNavigate);
     return () => window.removeEventListener('navigate', handleNavigate);
-  }, []);
-
-  if (isMaintenanceMode) {
-    return (
-      <div className="fixed inset-0 z-[9999] bg-[#000000] flex items-center justify-center p-6 text-center">
-        <div className="glass-card p-12 max-w-lg w-full border-[#5cb849]/30">
-          <div className="flex justify-center mb-6">
-            <div className="w-20 h-20 bg-[#5cb849]/10 rounded-full flex items-center justify-center border-2 border-[#5cb849]/20">
-              <svg className="w-10 h-10 text-[#5cb849] animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-              </svg>
-            </div>
-          </div>
-          
-          <h1 className="text-4xl font-bold text-white mb-4 tracking-tight">
-            Under Maintenance
-          </h1>
-          
-          <p className="text-xl text-gray-400 mb-8 leading-relaxed">
-            We are pushing some major updates to enhance your experience. 
-            We will be back soon!! keep an eye on our socials!
-          </p>
-          
-          <div className="flex flex-col gap-4">
-            <div className="h-1 w-full bg-[#1a1a1a] rounded-full overflow-hidden relative">
-              <div className="h-full bg-[#5cb849] w-1/3 animate-progress-maintenance absolute left-0 top-0"></div>
-            </div>
-            <p className="text-xs text-[#5cb849] font-medium tracking-widest uppercase">
-              System Upgrade in Progress
-            </p>
-          </div>
-        </div>
-        
-        <style>{`
-          @keyframes progress-maintenance {
-            0% { transform: translateX(-100%); }
-            100% { transform: translateX(300%); }
-          }
-          .animate-progress-maintenance {
-            animation: progress-maintenance 2s linear infinite;
-          }
-        `}</style>
-      </div>
-    );
-  }
+  }, [navigate]);
 
   return (
-    <WagmiProvider config={config}>
-      <QueryClientProvider client={queryClient}>
-        <RainbowKitProvider>
-          <NotificationProvider>
+    <NotificationProvider>
             <div className="flex flex-col min-h-screen bg-black">
               {/* Mobile Header with Hamburger */}
               <div className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-black border-b border-[#1a1a1a] p-4 flex items-center justify-between">
@@ -108,17 +72,27 @@ function App() {
               
               <div className="flex flex-1 pt-16 lg:pt-0">
                 <Sidebar 
-                  activeTab={activeTab} 
-                  setActiveTab={setActiveTab}
                   isMobileOpen={isMobileMenuOpen}
                   setIsMobileOpen={setIsMobileMenuOpen}
                 />
                 <main className="flex-1 lg:ml-64 p-4 lg:p-8 w-full max-w-full overflow-x-hidden">
-                  {activeTab === 'dashboard' && <Dashboard setLendBorrowInitialTab={setLendBorrowInitialTab} setActiveTab={setActiveTab} />}
-                  {activeTab === 'swap' && <Swap />}
-                  {activeTab === 'lend-borrow' && <LendBorrow initialTab={lendBorrowInitialTab} />}
-                  {activeTab === 'faucet' && <Faucet />}
-                  {activeTab === 'activity' && <Activity />}
+                  <Routes>
+                    <Route path="/dashboard" element={<Dashboard setLendBorrowInitialTab={setLendBorrowInitialTab} setActiveTab={(tab) => {
+                      const pathMap = {
+                        'dashboard': '/dashboard',
+                        'swap': '/swap',
+                        'lend-borrow': '/lend-borrow',
+                        'faucet': '/faucet',
+                        'activity': '/activity'
+                      };
+                      if (pathMap[tab]) navigate(pathMap[tab]);
+                    }} />} />
+                    <Route path="/swap" element={<Swap />} />
+                    <Route path="/lend-borrow" element={<LendBorrow initialTab={lendBorrowInitialTab} />} />
+                    <Route path="/faucet" element={<Faucet />} />
+                    <Route path="/activity" element={<Activity />} />
+                    <Route path="*" element={<Navigate to="/dashboard" replace />} />
+                  </Routes>
                 </main>
               </div>
               
@@ -286,7 +260,66 @@ function App() {
                 onClose={() => setIsChangelogOpen(false)}
               />
             </div>
-          </NotificationProvider>
+    </NotificationProvider>
+  );
+}
+
+function App() {
+  const isMaintenanceMode = false; // Set to false to disable maintenance mode
+
+  if (isMaintenanceMode) {
+    return (
+      <div className="fixed inset-0 z-[9999] bg-[#000000] flex items-center justify-center p-6 text-center">
+        <div className="glass-card p-12 max-w-lg w-full border-[#5cb849]/30">
+          <div className="flex justify-center mb-6">
+            <div className="w-20 h-20 bg-[#5cb849]/10 rounded-full flex items-center justify-center border-2 border-[#5cb849]/20">
+              <svg className="w-10 h-10 text-[#5cb849] animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+            </div>
+          </div>
+          
+          <h1 className="text-4xl font-bold text-white mb-4 tracking-tight">
+            Under Maintenance
+          </h1>
+          
+          <p className="text-xl text-gray-400 mb-8 leading-relaxed">
+            We are pushing some major updates to enhance your experience. 
+            We will be back soon!! keep an eye on our socials!
+          </p>
+          
+          <div className="flex flex-col gap-4">
+            <div className="h-1 w-full bg-[#1a1a1a] rounded-full overflow-hidden relative">
+              <div className="h-full bg-[#5cb849] w-1/3 animate-progress-maintenance absolute left-0 top-0"></div>
+            </div>
+            <p className="text-xs text-[#5cb849] font-medium tracking-widest uppercase">
+              System Upgrade in Progress
+            </p>
+          </div>
+        </div>
+        
+        <style>{`
+          @keyframes progress-maintenance {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(300%); }
+          }
+          .animate-progress-maintenance {
+            animation: progress-maintenance 2s linear infinite;
+          }
+        `}</style>
+      </div>
+    );
+  }
+
+  return (
+    <WagmiProvider config={config}>
+      <QueryClientProvider client={queryClient}>
+        <RainbowKitProvider>
+          <Routes>
+            <Route path="/" element={<LandingPage />} />
+            <Route path="/*" element={<AppLayout />} />
+          </Routes>
         </RainbowKitProvider>
       </QueryClientProvider>
     </WagmiProvider>

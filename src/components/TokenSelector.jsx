@@ -1,13 +1,13 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { ChevronDown, X, Search } from 'lucide-react';
 
-const TokenSelector = ({ 
-  tokens, 
-  selectedToken, 
-  onSelect, 
-  disabled = false, 
+const TokenSelector = ({
+  tokens,
+  selectedToken,
+  onSelect,
+  disabled = false,
   className = '',
-  balances = {} 
+  balances = {}
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
@@ -20,18 +20,18 @@ const TokenSelector = ({
   const sortedTokens = [...tokens].sort((a, b) => {
     const balA = parseFloat(balances[a.symbol] || '0');
     const balB = parseFloat(balances[b.symbol] || '0');
-    if (balB !== balA) return balB - balA; 
+    if (balB !== balA) return balB - balA;
     return a.symbol.localeCompare(b.symbol);
   });
 
   // Filter tokens based on search
-  const filteredTokens = sortedTokens.filter(token => 
+  const filteredTokens = sortedTokens.filter(token =>
     token.symbol.toLowerCase().includes(searchQuery.toLowerCase()) ||
     token.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   // Tokens with balances for quick select tabs
-  const tokensWithBalances = tokens.filter(token => 
+  const tokensWithBalances = tokens.filter(token =>
     balances[token.symbol] && parseFloat(balances[token.symbol]) > 0
   );
 
@@ -91,34 +91,34 @@ const TokenSelector = ({
   // Format balance for display
   const formatBalance = (balance) => {
     if (!balance || balance === '0') return '0.00';
-    
+
     // Remove commas and convert to number
     const num = parseFloat(String(balance).replace(/,/g, ''));
-    
+
     if (isNaN(num) || num === 0) return '0.00';
-    
+
     // Very small numbers
     if (num < 0.01) return num.toFixed(6);
     if (num < 1) return num.toFixed(4);
-    
+
     // Billions (1,000,000,000+)
     if (num >= 1_000_000_000) {
       const val = num / 1_000_000_000;
       return (val % 1 === 0 ? val.toFixed(0) : val.toFixed(2)) + 'B';
     }
-    
+
     // Millions (1,000,000+)
     if (num >= 1_000_000) {
       const val = num / 1_000_000;
       return (val % 1 === 0 ? val.toFixed(0) : val.toFixed(2)) + 'M';
     }
-    
+
     // Thousands (10,000+) - show as "90k" format
     if (num >= 10_000) {
       const val = num / 1_000;
       return (val % 1 === 0 ? val.toFixed(0) : val.toFixed(1)) + 'k';
     }
-    
+
     // Less than 10,000 - show full number with commas (e.g., 1,000)
     return num.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
   };
@@ -138,9 +138,9 @@ const TokenSelector = ({
           <div className="flex items-center gap-2">
             {selectedToken ? (
               <>
-                <img 
-                  src={selectedToken.icon} 
-                  alt={selectedToken.symbol} 
+                <img
+                  src={selectedToken.icon}
+                  alt={selectedToken.symbol}
                   className="w-6 h-6 rounded-full"
                   onError={(e) => { e.target.style.display = 'none'; }}
                 />
@@ -158,7 +158,7 @@ const TokenSelector = ({
           MODAL OVERLAY + DIALOG
           ═══════════════════════════════════════════════════════════════════ */}
       {isOpen && (
-        <div 
+        <div
           className="fixed inset-0 z-[9999] flex items-center justify-center p-4"
           style={{
             // Overlay: rgba(0, 0, 0, 0.7) with backdrop blur
@@ -176,12 +176,12 @@ const TokenSelector = ({
               - Padding: 24px
               - Box shadow for depth
               ═══════════════════════════════════════════════════════════════ */}
-          <div 
+          <div
             ref={modalRef}
             style={{
               opacity: isAnimating ? 1 : 0,
-              transform: isAnimating 
-                ? 'scale(1) translateY(0px)' 
+              transform: isAnimating
+                ? 'scale(1) translateY(0px)'
                 : 'scale(0.96) translateY(12px)',
               transition: 'all 250ms cubic-bezier(0.16, 1, 0.3, 1)',
             }}
@@ -196,7 +196,7 @@ const TokenSelector = ({
               <h2 className="text-xl font-bold text-white">Select Token</h2>
               <button
                 onClick={closeModal}
-                className="w-8 h-8 flex items-center justify-center rounded-lg bg-[#2a2a2a] hover:bg-[#3a3a3a] text-gray-400 hover:text-white transition-all duration-200"
+                className="w-8 h-8 flex items-center justify-center rounded-xl bg-[#2a2a2a] hover:bg-[#3a3a3a] text-gray-400 hover:text-white transition-all duration-200"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -241,15 +241,14 @@ const TokenSelector = ({
                       <button
                         key={token.symbol}
                         onClick={() => handleSelect(token)}
-                        className={`flex items-center justify-center gap-1.5 py-2 rounded-full font-medium transition-all duration-200 ${
-                          isActive
+                        className={`flex items-center justify-center gap-1.5 py-2 rounded-full font-medium transition-all duration-200 ${isActive
                             ? 'bg-[#5a8a3a] text-white shadow-lg shadow-[#5a8a3a]/20'
                             : 'bg-[#3a3a3a] text-[#9ca3af] hover:bg-[#454545] hover:text-white'
-                        }`}
+                          }`}
                       >
-                        <img 
-                          src={token.icon} 
-                          alt={token.symbol} 
+                        <img
+                          src={token.icon}
+                          alt={token.symbol}
                           className={`w-4 h-4 rounded-full ${isActive ? '' : 'opacity-70'}`}
                           onError={(e) => { e.target.style.display = 'none'; }}
                         />
@@ -283,11 +282,10 @@ const TokenSelector = ({
                       <button
                         key={token.symbol}
                         onClick={() => handleSelect(token)}
-                        className={`w-full flex items-center justify-between p-4 rounded-xl transition-all duration-200 cursor-pointer group ${
-                          isSelected 
-                            ? 'bg-[#2a2a2a] border border-[#5a8a3a]/40 shadow-lg shadow-[#5a8a3a]/10' 
+                        className={`w-full flex items-center justify-between p-4 rounded-xl transition-all duration-200 cursor-pointer group ${isSelected
+                            ? 'bg-[#2a2a2a] border border-[#5a8a3a]/40 shadow-lg shadow-[#5a8a3a]/10'
                             : 'bg-[#2a2a2a] border border-transparent hover:bg-[#353535] hover:border-[#3a3a3a]'
-                        }`}
+                          }`}
                       >
                         {/* Left side: Icon + Name */}
                         <div className="flex items-center gap-3">
@@ -297,9 +295,9 @@ const TokenSelector = ({
                                 {token.symbol[0] || '?'}
                               </span>
                             ) : (
-                              <img 
-                                src={token.icon} 
-                                alt={token.symbol} 
+                              <img
+                                src={token.icon}
+                                alt={token.symbol}
                                 className="w-full h-full object-cover"
                                 onError={() => {
                                   setImageErrors(prev => new Set([...prev, token.symbol]));

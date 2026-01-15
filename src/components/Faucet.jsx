@@ -79,11 +79,11 @@ const Faucet = () => {
   const handleExecuteClaim = async () => {
     if (!signer || !claimable.canClaim) return;
     const tx = await claimTokens(signer);
-    
+
     const totalAmount = formatTokenAmount(claimable.catAmount, TOKENS.CAT.decimals) + ' CAT, ' +
-                      formatTokenAmount(claimable.darcAmount, TOKENS.DARC.decimals) + ' DARC, ' +
-                      formatTokenAmount(claimable.pandaAmount, TOKENS.PANDA.decimals) + ' PANDA';
-    
+      formatTokenAmount(claimable.darcAmount, TOKENS.DARC.decimals) + ' DARC, ' +
+      formatTokenAmount(claimable.pandaAmount, TOKENS.PANDA.decimals) + ' PANDA';
+
     await showTransaction('claim', Promise.resolve(tx), {
       pendingMessage: 'Claiming tokens from faucet...',
       successMessage: `Successfully claimed ${totalAmount}`,
@@ -93,11 +93,11 @@ const Faucet = () => {
         tier: claimable.tier,
       },
     });
-    
+
     fetchClaimable();
     fetchBalances();
     // Modal will auto-close after 5 seconds showing confirmation
-    
+
     return tx;
   };
 
@@ -113,7 +113,7 @@ const Faucet = () => {
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-semibold text-white">Your Tier</h2>
           <div
-            className="px-4 py-2 rounded-lg text-sm font-medium"
+            className="px-4 py-2 rounded-xl text-sm font-medium"
             style={{ backgroundColor: `${tierInfo.color}20`, color: tierInfo.color }}
           >
             {tierInfo.name}
@@ -130,7 +130,7 @@ const Faucet = () => {
       {/* Claimable Amounts */}
       <div className="glass-card p-6 space-y-4">
         <h2 className="text-xl font-semibold mb-4 text-white">Claimable Tokens</h2>
-        
+
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -141,7 +141,7 @@ const Faucet = () => {
               {formatTokenAmount(claimable.catAmount, TOKENS.CAT.decimals)}
             </span>
           </div>
-          
+
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <img src={TOKENS.DARC.icon} alt="DARC" className="w-8 h-8" />
@@ -151,7 +151,7 @@ const Faucet = () => {
               {formatTokenAmount(claimable.darcAmount, TOKENS.DARC.decimals)}
             </span>
           </div>
-          
+
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <img src={TOKENS.PANDA.icon} alt="PANDA" className="w-8 h-8" />
@@ -173,16 +173,16 @@ const Faucet = () => {
         <button
           onClick={handleClaim}
           disabled={!isConnected || !claimable.canClaim || claiming}
-          className="w-full gradient-bg text-white py-3 rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:opacity-90 transition-opacity flex items-center justify-center gap-2 shadow-md"
+          className="w-full gradient-bg text-white py-3 rounded-xl font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:opacity-90 transition-opacity flex items-center justify-center gap-2 shadow-md"
         >
           <Gift className="w-5 h-5" />
           {claiming
             ? 'Claiming...'
             : !isConnected
-            ? 'Connect Wallet'
-            : !claimable.canClaim
-            ? timeRemaining ? `Cooldown: ${timeRemaining}` : 'Cannot Claim'
-            : 'Claim Tokens'}
+              ? 'Connect Wallet'
+              : !claimable.canClaim
+                ? timeRemaining ? `Cooldown: ${timeRemaining}` : 'Cannot Claim'
+                : 'Claim Tokens'}
         </button>
       </div>
 
@@ -193,7 +193,7 @@ const Faucet = () => {
           {Object.values(TIER_INFO).map((tier, index) => (
             <div
               key={index}
-              className="flex items-center justify-between p-3 rounded-lg glass-card"
+              className="flex items-center justify-between p-3 rounded-xl glass-card"
             >
               <div>
                 <p className="font-medium" style={{ color: tier.color }}>
@@ -219,8 +219,8 @@ const Faucet = () => {
         fromToken={null}
         toToken={null}
         fromAmount={formatTokenAmount(claimable.catAmount, TOKENS.CAT.decimals) + ' CAT, ' +
-                   formatTokenAmount(claimable.darcAmount, TOKENS.DARC.decimals) + ' DARC, ' +
-                   formatTokenAmount(claimable.pandaAmount, TOKENS.PANDA.decimals) + ' PANDA'}
+          formatTokenAmount(claimable.darcAmount, TOKENS.DARC.decimals) + ' DARC, ' +
+          formatTokenAmount(claimable.pandaAmount, TOKENS.PANDA.decimals) + ' PANDA'}
         toAmount=""
         onApprove={undefined}
         onExecute={handleExecuteClaim}

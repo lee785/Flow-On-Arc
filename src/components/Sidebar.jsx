@@ -1,23 +1,19 @@
 import React from 'react';
-import { LayoutDashboard, ArrowLeftRight, DollarSign, Droplet, Clock, Wallet, X } from 'lucide-react';
+import { NavLink, useLocation } from 'react-router-dom';
+import { LayoutDashboard, ArrowLeftRight, DollarSign, Droplet, Clock, Wallet, X, ChevronDown, Home } from 'lucide-react';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 
-const Sidebar = ({ activeTab, setActiveTab, isMobileOpen, setIsMobileOpen }) => {
-  const menuItems = [
-    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { id: 'swap', label: 'Swap', icon: ArrowLeftRight },
-    { id: 'lend-borrow', label: 'Lend/Borrow', icon: DollarSign },
-    { id: 'faucet', label: 'Faucet', icon: Droplet },
-    { id: 'activity', label: 'Activity', icon: Clock },
-  ];
+const Sidebar = ({ isMobileOpen, setIsMobileOpen }) => {
+  const location = useLocation();
 
-  const handleItemClick = (id) => {
-    setActiveTab(id);
-    // Close mobile menu when item is clicked
-    if (setIsMobileOpen) {
-      setIsMobileOpen(false);
-    }
-  };
+  const menuItems = [
+    { id: 'home', label: 'Home', icon: Home, path: '/' },
+    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, path: '/dashboard' },
+    { id: 'swap', label: 'Swap', icon: ArrowLeftRight, path: '/swap' },
+    { id: 'lend-borrow', label: 'Lend/Borrow', icon: DollarSign, path: '/lend-borrow' },
+    { id: 'faucet', label: 'Faucet', icon: Droplet, path: '/faucet' },
+    { id: 'activity', label: 'Activity', icon: Clock, path: '/activity' },
+  ];
 
   return (
     <>
@@ -48,7 +44,7 @@ const Sidebar = ({ activeTab, setActiveTab, isMobileOpen, setIsMobileOpen }) => 
           {/* Mobile Close Button */}
           <button
             onClick={() => setIsMobileOpen && setIsMobileOpen(false)}
-            className="lg:hidden p-2 rounded-lg hover:bg-[#1a1a1a] transition-colors"
+            className="lg:hidden p-2 rounded-xl hover:bg-[#1a1a1a] transition-colors"
           >
             <X className="w-5 h-5 text-gray-400" />
           </button>
@@ -58,20 +54,23 @@ const Sidebar = ({ activeTab, setActiveTab, isMobileOpen, setIsMobileOpen }) => 
         <nav className="flex-1 p-4 space-y-2">
           {menuItems.map((item) => {
             const Icon = item.icon;
-            const isActive = activeTab === item.id;
+            const isActive = location.pathname === item.path;
 
             return (
-              <button
+              <NavLink
                 key={item.id}
-                onClick={() => handleItemClick(item.id)}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all min-h-[44px] ${isActive
-                  ? 'gradient-bg text-white shadow-lg shadow-[#5a8a3a]/20 font-semibold'
-                  : 'text-gray-400 hover:text-white hover:bg-[#1a1a1a]'
-                  }`}
+                to={item.path}
+                onClick={() => setIsMobileOpen(false)}
+                className={({ isActive }) =>
+                  `w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all min-h-[44px] ${isActive
+                    ? 'gradient-bg text-white shadow-lg shadow-[#5a8a3a]/20 font-semibold'
+                    : 'text-gray-400 hover:text-white hover:bg-[#1a1a1a]'
+                  }`
+                }
               >
                 <Icon className="w-5 h-5 shrink-0" />
                 <span className="font-medium">{item.label}</span>
-              </button>
+              </NavLink>
             );
           })}
         </nav>
@@ -99,7 +98,7 @@ const Sidebar = ({ activeTab, setActiveTab, isMobileOpen, setIsMobileOpen }) => 
                       return (
                         <button
                           onClick={openConnectModal}
-                          className="w-full gradient-bg text-white py-3 px-4 rounded-lg font-medium flex items-center justify-center gap-2 hover:opacity-90 transition-opacity shadow-md min-h-[44px]"
+                          className="w-full gradient-bg text-white py-3 px-4 rounded-xl font-medium flex items-center justify-center gap-2 hover:opacity-90 transition-opacity shadow-md min-h-[44px]"
                         >
                           <Wallet className="w-5 h-5" />
                           Connect Wallet
@@ -110,10 +109,11 @@ const Sidebar = ({ activeTab, setActiveTab, isMobileOpen, setIsMobileOpen }) => 
                     return (
                       <button
                         onClick={openAccountModal}
-                        className="w-full bg-[#1a1a1a] text-white py-3 px-4 rounded-lg font-medium flex items-center justify-center gap-2 hover:bg-[#222222] transition-colors min-h-[44px]"
+                        className="w-full bg-[#1a1a1a] text-white py-3 px-4 rounded-xl font-medium flex items-center justify-center gap-2 hover:bg-[#222222] transition-colors min-h-[44px]"
                       >
                         <div className="w-2 h-2 rounded-full bg-[#5a8a3a] shrink-0"></div>
                         <span className="truncate">{account.displayName}</span>
+                        <ChevronDown className="w-4 h-4 shrink-0 opacity-60" />
                       </button>
                     );
                   })()}

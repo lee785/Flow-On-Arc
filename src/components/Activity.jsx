@@ -33,7 +33,7 @@ const Activity = () => {
   const fetchTransactions = useCallback(async () => {
     setLoading(true);
     setError(null);
-    
+
     try {
       const typeFilter = filter === 'all' ? null : filter;
       const data = await fetchBackendTransactions(50, 0, typeFilter);
@@ -49,7 +49,7 @@ const Activity = () => {
 
   useEffect(() => {
     fetchTransactions();
-    
+
     // Refresh every 30 seconds
     const interval = setInterval(fetchTransactions, 30000);
     return () => clearInterval(interval);
@@ -90,7 +90,7 @@ const Activity = () => {
       <div className="flex items-center justify-between p-4 hover:bg-white/5 transition-colors border-b border-[#1a1a1a] last:border-b-0">
         {/* Type & Icon */}
         <div className="flex items-center gap-3 min-w-[140px]">
-          <div className={`p-2 rounded-lg ${config.bg}`}>
+          <div className={`p-2 rounded-xl ${config.bg}`}>
             <Icon className={`w-4 h-4 ${config.color}`} />
           </div>
           <div>
@@ -132,7 +132,7 @@ const Activity = () => {
           href={tx.explorerUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="ml-4 p-2 rounded-lg bg-[#1a1a1a] hover:bg-[#252525] transition-colors group"
+          className="ml-4 p-2 rounded-xl bg-[#1a1a1a] hover:bg-[#252525] transition-colors group"
           title="View on Explorer"
         >
           <ExternalLink className="w-4 h-4 text-gray-500 group-hover:text-[#5cb849]" />
@@ -162,7 +162,7 @@ const Activity = () => {
           <button
             onClick={fetchTransactions}
             disabled={loading}
-            className="p-2 rounded-lg bg-[#1a1a1a] hover:bg-[#252525] transition-colors disabled:opacity-50"
+            className="p-2 rounded-xl bg-[#1a1a1a] hover:bg-[#252525] transition-colors disabled:opacity-50"
             title="Refresh"
           >
             <RefreshCw className={`w-4 h-4 text-gray-400 ${loading ? 'animate-spin' : ''}`} />
@@ -177,11 +177,10 @@ const Activity = () => {
           <button
             key={f.value}
             onClick={() => setFilter(f.value)}
-            className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors whitespace-nowrap min-h-[36px] ${
-              filter === f.value
+            className={`px-3 py-1.5 rounded-xl text-sm font-medium transition-colors whitespace-nowrap min-h-[36px] ${filter === f.value
                 ? 'bg-[#5a8a3a] text-white'
                 : 'bg-[#1a1a1a] text-gray-400 hover:text-white hover:bg-[#252525]'
-            }`}
+              }`}
           >
             {f.label}
           </button>
@@ -211,7 +210,7 @@ const Activity = () => {
             <Clock className="w-16 h-16 text-gray-600 mx-auto mb-4" />
             <p className="text-white text-xl font-semibold mb-2">No Transactions Yet</p>
             <p className="text-gray-500 text-sm max-w-md mx-auto">
-              {filter === 'all' 
+              {filter === 'all'
                 ? 'Transactions will appear here as users interact with the protocol. Try performing a swap or supply!'
                 : `No ${filter} transactions found. Try a different filter.`
               }

@@ -33,7 +33,7 @@ const LendBorrow = ({ initialTab = 'supply' }) => {
   const { showTransaction } = useNotifications();
 
   const [activeTab, setActiveTab] = useState(initialTab);
-  
+
   // Update activeTab when initialTab prop changes
   useEffect(() => {
     if (initialTab) {
@@ -109,7 +109,7 @@ const LendBorrow = ({ initialTab = 'supply' }) => {
 
     const totalCollateralUSD = Number(accountData.totalCollateralUSD) / 1e18;
     const totalDebtUSD = Number(accountData.totalDebtUSD) / 1e18;
-    
+
     // If no debt, can withdraw everything
     if (totalDebtUSD === 0) {
       return userCollateral[token.symbol] || 0n;
@@ -133,14 +133,14 @@ const LendBorrow = ({ initialTab = 'supply' }) => {
 
     // Calculate this token's share of total collateral
     const tokenShare = totalCollateralUSD > 0 ? tokenCollateralUSD / totalCollateralUSD : 0;
-    
+
     // Calculate free collateral for this token
     const tokenFreeCollateralUSD = freeCollateralUSD * tokenShare;
-    
+
     // Convert back to token amount
     const tokenPrice = tokenPrices[token.symbol] || 0;
     if (tokenPrice === 0) return 0n;
-    
+
     const tokenFreeAmount = tokenFreeCollateralUSD / tokenPrice;
     const maxWithdrawable = BigInt(Math.floor(tokenFreeAmount * (10 ** token.decimals)));
 
@@ -153,12 +153,12 @@ const LendBorrow = ({ initialTab = 'supply' }) => {
     if (!accountData || !selectedToken || !tokenPrices[selectedToken.symbol]) {
       return '0.00';
     }
-    
+
     const availableBorrowUSD = Number(accountData.availableBorrowsUSD) / 1e18;
     const tokenPrice = tokenPrices[selectedToken.symbol] || 0;
-    
+
     if (tokenPrice === 0) return '0.00';
-    
+
     const availableInToken = availableBorrowUSD / tokenPrice;
     return formatTokenAmount(
       BigInt(Math.floor(availableInToken * (10 ** selectedToken.decimals))),
@@ -179,16 +179,16 @@ const LendBorrow = ({ initialTab = 'supply' }) => {
 
   const handleExecuteSupply = async () => {
     if (!signer || !amount || !selectedToken) return;
-    
+
     // Clean the amount: remove commas and ensure it's a valid number
     const cleanedAmount = amount.toString().replace(/,/g, '').trim();
     if (!cleanedAmount || isNaN(parseFloat(cleanedAmount)) || parseFloat(cleanedAmount) <= 0) {
       throw new Error('Invalid amount');
     }
-    
+
     try {
       const tx = await executeSupply(signer, selectedToken, cleanedAmount);
-      
+
       await showTransaction('supply', Promise.resolve(tx), {
         pendingMessage: `Supplying ${cleanedAmount} ${selectedToken.symbol}...`,
         successMessage: `Successfully supplied ${cleanedAmount} ${selectedToken.symbol}`,
@@ -197,12 +197,12 @@ const LendBorrow = ({ initialTab = 'supply' }) => {
           amount: cleanedAmount,
         },
       });
-      
+
       setAmount('');
       fetchAccountData();
       fetchBalances();
       // Modal will auto-close after 5 seconds showing confirmation
-      
+
       return tx;
     } catch (error) {
       console.error('Supply error:', error);
@@ -217,16 +217,16 @@ const LendBorrow = ({ initialTab = 'supply' }) => {
 
   const handleExecuteWithdraw = async () => {
     if (!signer || !amount || !selectedToken) return;
-    
+
     // Clean the amount: remove commas and ensure it's a valid number
     const cleanedAmount = amount.toString().replace(/,/g, '').trim();
     if (!cleanedAmount || isNaN(parseFloat(cleanedAmount)) || parseFloat(cleanedAmount) <= 0) {
       throw new Error('Invalid amount');
     }
-    
+
     try {
       const tx = await withdrawCollateral(signer, selectedToken, cleanedAmount);
-      
+
       await showTransaction('withdraw', Promise.resolve(tx), {
         pendingMessage: `Withdrawing ${cleanedAmount} ${selectedToken.symbol}...`,
         successMessage: `Successfully withdrew ${cleanedAmount} ${selectedToken.symbol}`,
@@ -235,12 +235,12 @@ const LendBorrow = ({ initialTab = 'supply' }) => {
           amount: cleanedAmount,
         },
       });
-      
+
       setAmount('');
       fetchAccountData();
       fetchBalances();
       // Modal will auto-close after 5 seconds showing confirmation
-      
+
       return tx;
     } catch (error) {
       console.error('Withdraw error:', error);
@@ -261,16 +261,16 @@ const LendBorrow = ({ initialTab = 'supply' }) => {
 
   const handleExecuteBorrow = async () => {
     if (!signer || !amount || !selectedToken) return;
-    
+
     // Clean the amount: remove commas and ensure it's a valid number
     const cleanedAmount = amount.toString().replace(/,/g, '').trim();
     if (!cleanedAmount || isNaN(parseFloat(cleanedAmount)) || parseFloat(cleanedAmount) <= 0) {
       throw new Error('Invalid amount');
     }
-    
+
     try {
       const tx = await borrowTokens(signer, selectedToken, cleanedAmount);
-      
+
       await showTransaction('borrow', Promise.resolve(tx), {
         pendingMessage: `Borrowing ${cleanedAmount} ${selectedToken.symbol}...`,
         successMessage: `Successfully borrowed ${cleanedAmount} ${selectedToken.symbol}`,
@@ -279,12 +279,12 @@ const LendBorrow = ({ initialTab = 'supply' }) => {
           amount: cleanedAmount,
         },
       });
-      
+
       setAmount('');
       fetchAccountData();
       fetchBalances();
       // Modal will auto-close after 5 seconds showing confirmation
-      
+
       return tx;
     } catch (error) {
       console.error('Borrow error:', error);
@@ -311,16 +311,16 @@ const LendBorrow = ({ initialTab = 'supply' }) => {
 
   const handleExecuteRepay = async () => {
     if (!signer || !amount || !selectedToken) return;
-    
+
     // Clean the amount: remove commas and ensure it's a valid number
     const cleanedAmount = amount.toString().replace(/,/g, '').trim();
     if (!cleanedAmount || isNaN(parseFloat(cleanedAmount)) || parseFloat(cleanedAmount) <= 0) {
       throw new Error('Invalid amount');
     }
-    
+
     try {
       const tx = await executeRepay(signer, selectedToken, cleanedAmount);
-      
+
       await showTransaction('repay', Promise.resolve(tx), {
         pendingMessage: `Repaying ${cleanedAmount} ${selectedToken.symbol}...`,
         successMessage: `Successfully repaid ${cleanedAmount} ${selectedToken.symbol}`,
@@ -329,12 +329,12 @@ const LendBorrow = ({ initialTab = 'supply' }) => {
           amount: cleanedAmount,
         },
       });
-      
+
       setAmount('');
       fetchAccountData();
       fetchBalances();
       // Modal will auto-close after 5 seconds showing confirmation
-      
+
       return tx;
     } catch (error) {
       console.error('Repay error:', error);
@@ -367,10 +367,10 @@ const LendBorrow = ({ initialTab = 'supply' }) => {
 
   const setPercentageAmount = (percentage) => {
     if (!selectedToken) return;
-    
+
     let maxAmount = 0;
     let maxAmountFormatted = '0';
-    
+
     if (activeTab === 'supply') {
       // Use wallet balance
       maxAmountFormatted = (balances[selectedToken.symbol] || '0').replace(/,/g, '');
@@ -390,22 +390,22 @@ const LendBorrow = ({ initialTab = 'supply' }) => {
       maxAmountFormatted = formatTokenAmount(userDebt[selectedToken.symbol] || 0n, selectedToken.decimals);
       maxAmount = parseFloat(maxAmountFormatted.replace(/,/g, ''));
     }
-    
+
     if (maxAmount <= 0) return;
-    
+
     // Calculate percentage amount
     const percentageAmount = (maxAmount * percentage) / 100;
-    
+
     // Format to appropriate decimal places based on token decimals
     const decimals = selectedToken.decimals;
     const formattedAmount = percentageAmount.toFixed(decimals === 6 ? 2 : 6).replace(/\.?0+$/, '');
-    
+
     setAmount(formattedAmount);
   };
 
   const isInsufficientBalance = () => {
     if (!isConnected || !amount || !selectedToken || parseFloat(amount) <= 0) return false;
-    
+
     if (activeTab === 'supply' || activeTab === 'repay') {
       return parseFloat(amount) > parseFloat((balances[selectedToken.symbol] || '0').replace(/,/g, ''));
     }
@@ -444,25 +444,25 @@ const LendBorrow = ({ initialTab = 'supply' }) => {
 
       {/* Account Overview */}
       <div className="grid grid-cols-2 gap-3 sm:gap-4">
-        <div className="glass-card p-4">
+        <div className="glass-card p-4 rounded-2xl">
           <p className="text-sm text-gray-400 mb-1">Total Collateral</p>
           <p className="text-xl font-bold gradient-text">
             {formatUSD(Number(accountData.totalCollateralUSD) / 1e18)}
           </p>
         </div>
-        <div className="glass-card p-4">
+        <div className="glass-card p-4 rounded-2xl">
           <p className="text-sm text-gray-400 mb-1">Total Debt</p>
           <p className="text-xl font-bold text-white">
             {formatUSD(Number(accountData.totalDebtUSD) / 1e18)}
           </p>
         </div>
-        <div className="glass-card p-4">
+        <div className="glass-card p-4 rounded-2xl">
           <p className="text-sm text-gray-400 mb-1">Available to Borrow</p>
           <p className="text-xl font-bold text-[#5a8a3a]">
             {formatUSD(Number(accountData.availableBorrowsUSD) / 1e18)}
           </p>
         </div>
-        <div className="glass-card p-4">
+        <div className="glass-card p-4 rounded-2xl">
           <p className="text-sm text-gray-400 mb-1">Health Factor</p>
           <p className="text-xl font-bold text-white">
             {accountData.healthFactor > 0
@@ -473,16 +473,15 @@ const LendBorrow = ({ initialTab = 'supply' }) => {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 sm:gap-2 glass-card p-1 overflow-x-auto scrollbar-hide">
+      <div className="flex gap-1 sm:gap-2 glass-card p-1 overflow-x-auto scrollbar-hide rounded-2xl">
         {['supply', 'withdraw', 'borrow', 'repay'].map((tab) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
-            className={`flex-1 py-2 px-2 sm:px-4 rounded-md font-medium transition-all text-sm sm:text-base min-h-[40px] whitespace-nowrap ${
-              activeTab === tab
+            className={`flex-1 py-2 px-2 sm:px-4 rounded-xl font-medium transition-all text-sm sm:text-base min-h-[40px] whitespace-nowrap ${activeTab === tab
                 ? 'gradient-bg text-white'
                 : 'text-gray-400 hover:text-white'
-            }`}
+              }`}
           >
             {tab.charAt(0).toUpperCase() + tab.slice(1)}
           </button>
@@ -494,7 +493,7 @@ const LendBorrow = ({ initialTab = 'supply' }) => {
         <h2 className="text-base sm:text-lg font-semibold mb-4 text-white">Token Prices</h2>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {LENDABLE_TOKENS.map(token => (
-            <div key={token.symbol} className="flex items-center justify-center gap-3 p-3 glass-card">
+            <div key={token.symbol} className="flex items-center justify-center gap-3 p-3 glass-card rounded-xl">
               <div className="flex items-center gap-2">
                 <img src={token.icon} alt={token.symbol} className="w-5 h-5 rounded-full" />
                 <span className="text-sm font-medium text-white">{token.symbol}</span>
@@ -517,10 +516,10 @@ const LendBorrow = ({ initialTab = 'supply' }) => {
             onSelect={(token) => setSelectedToken(token)}
             className="w-full"
             balances={
-              activeTab === 'supply' || activeTab === 'repay' 
+              activeTab === 'supply' || activeTab === 'repay'
                 ? balances  // Show wallet balances for supply/repay
                 : activeTab === 'withdraw'
-                ? Object.fromEntries(
+                  ? Object.fromEntries(
                     LENDABLE_TOKENS.map(token => {
                       const maxWithdrawable = getMaxWithdrawable(token);
                       return [
@@ -529,7 +528,7 @@ const LendBorrow = ({ initialTab = 'supply' }) => {
                       ];
                     })
                   )  // Show available withdrawable amounts (not full collateral)
-                : {}  // No balances for borrow
+                  : {}  // No balances for borrow
             }
           />
           {tokenPrices[selectedToken.symbol] > 0 && (
@@ -551,7 +550,7 @@ const LendBorrow = ({ initialTab = 'supply' }) => {
                 setAmount(cleaned);
               }}
               placeholder="0.00"
-              className={`w-full bg-[#1a1a1a] border ${isInsufficientBalance() || isBelowMinimum() ? 'border-red-500/50 focus:border-red-500' : 'border-[#2a2a2a]'} rounded-lg px-4 py-3 text-white pr-16`}
+              className={`w-full bg-[#1a1a1a] border ${isInsufficientBalance() || isBelowMinimum() ? 'border-red-500/50 focus:border-red-500' : 'border-[#2a2a2a]'} rounded-xl px-4 py-3 text-white pr-16`}
             />
             <button
               onClick={setMaxAmount}
@@ -560,7 +559,7 @@ const LendBorrow = ({ initialTab = 'supply' }) => {
               MAX
             </button>
           </div>
-          
+
           {/* Percentage Buttons */}
           <div className="flex items-center gap-2 mt-2">
             <span className="text-xs text-gray-500">Quick:</span>
@@ -568,13 +567,13 @@ const LendBorrow = ({ initialTab = 'supply' }) => {
               <button
                 key={percent}
                 onClick={() => setPercentageAmount(percent)}
-                className="px-3 py-1 text-xs font-medium rounded-lg bg-[#1a1a1a] hover:bg-[#252525] text-gray-400 hover:text-white transition-colors border border-[#2a2a2a] hover:border-[#5a8a3a]/30 min-h-[28px]"
+                className="px-3 py-1 text-xs font-medium rounded-xl bg-[#1a1a1a] hover:bg-[#252525] text-gray-400 hover:text-white transition-colors border border-[#2a2a2a] hover:border-[#5a8a3a]/30 min-h-[28px]"
               >
                 {percent === 100 ? 'MAX' : `${percent}%`}
               </button>
             ))}
           </div>
-          
+
           <p className={`text-xs mt-2 ${isInsufficientBalance() || isBelowMinimum() ? 'text-red-400' : 'text-gray-500'}`}>
             {activeTab === 'supply' && `Balance: ${balances[selectedToken.symbol] || '0.00'}`}
             {activeTab === 'withdraw' && (
@@ -607,12 +606,12 @@ const LendBorrow = ({ initialTab = 'supply' }) => {
         <button
           onClick={
             activeTab === 'supply' ? handleSupply :
-            activeTab === 'withdraw' ? handleWithdraw :
-            activeTab === 'borrow' ? handleBorrow :
-            handleRepay
+              activeTab === 'withdraw' ? handleWithdraw :
+                activeTab === 'borrow' ? handleBorrow :
+                  handleRepay
           }
           disabled={!isConnected || !amount || loading || isInsufficientBalance() || isBelowMinimum()}
-          className="w-full gradient-bg text-white py-3 rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:opacity-90 transition-opacity shadow-md min-h-[44px] text-sm sm:text-base"
+          className="w-full gradient-bg text-white py-3 rounded-2xl font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:opacity-90 transition-opacity shadow-md min-h-[44px] text-sm sm:text-base"
         >
           {getButtonText()}
         </button>
@@ -629,14 +628,14 @@ const LendBorrow = ({ initialTab = 'supply' }) => {
         toAmount={amount}
         onApprove={
           activeTab === 'supply' ? handleApproveSupply :
-          activeTab === 'repay' ? handleApproveRepay :
-          undefined
+            activeTab === 'repay' ? handleApproveRepay :
+              undefined
         }
         onExecute={
           activeTab === 'supply' ? handleExecuteSupply :
-          activeTab === 'withdraw' ? handleExecuteWithdraw :
-          activeTab === 'borrow' ? handleExecuteBorrow :
-          handleExecuteRepay
+            activeTab === 'withdraw' ? handleExecuteWithdraw :
+              activeTab === 'borrow' ? handleExecuteBorrow :
+                handleExecuteRepay
         }
         requiresApproval={requiresApproval && (activeTab === 'supply' || activeTab === 'repay')}
         transactionParams={{}}

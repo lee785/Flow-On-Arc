@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { X, Bell, Rocket, Shield, Zap, ChevronDown, ChevronUp } from 'lucide-react';
 
 const ChangelogModal = ({ isOpen, onClose }) => {
-  const [expandedVersion, setExpandedVersion] = useState('v1.4.5');
+  const [expandedVersion, setExpandedVersion] = useState('v1.4.6');
 
   // Handle escape key
   useEffect(() => {
@@ -16,6 +16,15 @@ const ChangelogModal = ({ isOpen, onClose }) => {
   if (!isOpen) return null;
 
   const updates = [
+    {
+      version: "v1.4.6",
+      date: "January 15, 2026",
+      changes: [
+        { type: 'improvement', text: 'Landing Page Cards: Migrated all cards from custom redesign-card styling to glass-card styling for visual consistency with the main dApp interface.' },
+        { type: 'feature', text: 'Landing Page Integration: Fully integrated landing page with URL-based routing. Users can now navigate between the landing page and main dApp seamlessly, with routes persisting on page refresh.' },
+        { type: 'feature', text: 'Home Navigation: Added Home menu item to sidebar navigation, allowing users to easily navigate back to the landing page from any section of the dApp.' }
+      ]
+    },
     {
       version: "v1.4.5",
       date: "January 9, 2026",

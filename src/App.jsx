@@ -12,12 +12,25 @@ import Swap from './components/Swap';
 import LendBorrow from './components/LendBorrow';
 import Faucet from './components/Faucet';
 import Activity from './components/Activity';
-import { Twitter, MessageSquare, Bell, Menu, Plus, X } from 'lucide-react';
+import { Twitter, MessageSquare, Bell, Menu, Plus, X, Github } from 'lucide-react';
 import FeedbackModal from './components/FeedbackModal';
 import ChangelogModal from './components/ChangelogModal';
 import LandingPage from './components/LandingPage';
 import ErrorBoundary from './components/ErrorBoundary';
 import PageTransition from './components/PageTransition';
+
+// Custom Brand Icons
+const XIcon = ({ className }) => (
+  <svg viewBox="0 0 24 24" className={className} fill="currentColor">
+    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+  </svg>
+);
+
+const DiscordIcon = ({ className }) => (
+  <svg viewBox="0 0 127.14 96.36" className={className} fill="currentColor">
+    <path d="M107.7,8.07A105.15,105.15,0,0,0,81.47,0a72.06,72.06,0,0,0-3.36,6.83A97.68,97.68,0,0,0,49,6.83,72.37,72.37,0,0,0,45.64,0,105.89,105.89,0,0,0,19.39,8.09C2.71,32.65-1.82,56.6,0.48,80.21a105.73,105.73,0,0,0,32.28,16.15,77.7,77.7,0,0,0,7.37-12,67.65,67.65,0,0,0-11.78-5.56,54.8,54.8,0,0,1,10-5.17,109.81,109.81,0,0,0,44.74,0,54.8,54.8,0,0,1,10,5.17,67.46,67.46,0,0,0-11.78,5.56,77.29,77.29,0,0,0,7.38,12,105.27,105.27,0,0,0,32.35-16.15C129.58,52,124,28.33,107.7,8.07ZM42.45,65.69C36.18,65.69,31,60,31,53s5.12-12.67,11.41-12.67S54,46,53.86,53,48.74,65.69,42.45,65.69Zm42.24,0C78.41,65.69,73.25,60,73.25,53s5.12-12.67,11.44-12.67S96.2,46,96.07,53,91,65.69,84.69,65.69Z" />
+  </svg>
+);
 
 const queryClient = new QueryClient();
 
@@ -99,8 +112,24 @@ function AppLayout() {
         </div>
 
         {/* Footer - responsive */}
-        <footer className="lg:ml-64 py-4 px-4 lg:px-8 border-t border-[#1a1a1a]">
-          <p className="text-sm text-gray-400 text-center">Flow On ARC © 2025</p>
+        <footer className="lg:ml-64 py-6 px-4 lg:px-8 border-t border-[#1a1a1a] bg-black/50 backdrop-blur-sm mt-auto">
+          <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-center gap-4 text-center">
+            <div className="flex items-center gap-4">
+              <a href="https://twitter.com/heyeren_" target="_blank" rel="noopener noreferrer" className="text-gray-500 hover:text-[#22c55e] transition-colors duration-200">
+                <XIcon className="w-4 h-4" />
+              </a>
+              <a href="https://discord.gg/buildonarc" target="_blank" rel="noopener noreferrer" className="text-gray-500 hover:text-[#22c55e] transition-colors duration-200">
+                <DiscordIcon className="w-4 h-4" />
+              </a>
+              <a href="https://github.com/lee785/Flow-On-Arc" target="_blank" rel="noopener noreferrer" className="text-gray-500 hover:text-[#22c55e] transition-colors duration-200">
+                <Github className="w-4 h-4" />
+              </a>
+            </div>
+            <div className="hidden sm:block h-3 w-[1px] bg-gray-800 mx-1"></div>
+            <p className="text-sm text-gray-500 font-medium tracking-tight">
+              Flow On Arc © 2025
+            </p>
+          </div>
         </footer>
 
         {/* Mobile Action Menu Overlay */}
@@ -152,7 +181,7 @@ function AppLayout() {
                 aria-label="Follow on X"
                 title="Follow on X"
               >
-                <Twitter className="w-5 h-5" />
+                <XIcon className="w-5 h-5" />
               </a>
             </div>
           )}
@@ -197,13 +226,13 @@ function AppLayout() {
 
           {/* Follow on X Button */}
           <a
-            href="https://twitter.com/heyeren_"
+            href="https://twitter.com/flowOnArc"
             target="_blank"
             rel="noopener noreferrer"
             className="w-10 h-10 rounded-full bg-[#5cb849] text-white flex items-center justify-center shadow-lg shadow-[#5cb849]/20 hover:bg-[#6bc956] hover:scale-110 transition-all duration-200 group relative"
             title="Follow on X"
           >
-            <Twitter className="w-5 h-5" />
+            <XIcon className="w-5 h-5" />
           </a>
         </div>
 

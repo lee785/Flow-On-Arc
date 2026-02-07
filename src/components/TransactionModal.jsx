@@ -37,17 +37,26 @@ const TransactionModal = ({
       setIsConfirmed(false);
       setTransactionHash(null);
       setCurrentStep(0);
-      setStepStatus({});
+
+      // Set the first step to processing immediately so the user sees the spinner 
+      // before the wallet prompt appears
+      const labels = getStepLabels();
+      if (labels.length > 0) {
+        setStepStatus({ [labels[0].key]: 'processing' });
+      } else {
+        setStepStatus({});
+      }
     }
   }, [isOpen]); // Only depend on isOpen - ignore amount changes
 
   // Auto-trigger first step when modal opens
   useEffect(() => {
     if (isOpen) {
-      // Small delay (300ms) to allow modal animation to start before wallet popup
+      // 1000ms delay to allow modal animation to complete and user to see the "Processing" state
+      // before the wallet popup interrupts the UI
       const timer = setTimeout(() => {
         handleCombined();
-      }, 300);
+      }, 1000);
       return () => clearTimeout(timer);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps

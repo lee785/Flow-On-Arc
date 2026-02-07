@@ -31,35 +31,30 @@ const TransactionModal = ({
 
   useEffect(() => {
     if (isOpen) {
+      // 1. Sync local states immediately
       setSavedFromAmount(fromAmount);
       setSavedToAmount(toAmount);
-      // Reset transaction state for a fresh start
       setIsConfirmed(false);
       setTransactionHash(null);
       setCurrentStep(0);
 
-      // Set the first step to processing immediately so the user sees the spinner 
-      // before the wallet prompt appears
+      // 2. Set the first step to processing immediately so the user sees the spinner 
+      // BEFORE the wallet popup disrupts the UI focus. 
       const labels = getStepLabels();
       if (labels.length > 0) {
         setStepStatus({ [labels[0].key]: 'processing' });
       } else {
         setStepStatus({});
       }
-    }
-  }, [isOpen]); // Only depend on isOpen - ignore amount changes
 
-  // Auto-trigger first step when modal opens
-  useEffect(() => {
-    if (isOpen) {
-      // 1000ms delay to allow modal animation to complete and user to see the "Processing" state
-      // before the wallet popup interrupts the UI
+      // 3. 1500ms delay to allow modal animation to complete and user to clearly see the "Processing" state
+      // before the wallet popup takes over.
       const timer = setTimeout(() => {
         handleCombined();
-      }, 1000);
+      }, 1500);
+
       return () => clearTimeout(timer);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
 
   const getTransactionLabel = () => {

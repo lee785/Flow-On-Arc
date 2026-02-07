@@ -30,7 +30,7 @@ const LendBorrow = ({ initialTab = 'supply' }) => {
   const signer = useEthersSigner();
   const { balances, fetchBalances } = useBalances(provider, address);
   const { prices: tokenPrices } = useTokenPrices(provider);
-  const { showTransaction } = useNotifications();
+  const { showTransaction, setIsBlurActive } = useNotifications();
 
   const [activeTab, setActiveTab] = useState(initialTab);
 
@@ -169,6 +169,7 @@ const LendBorrow = ({ initialTab = 'supply' }) => {
   const handleSupply = async () => {
     if (!signer || !amount) return;
     setShowModal(true);
+    setIsBlurActive(true);
   };
 
   const handleApproveSupply = async () => {
@@ -213,6 +214,7 @@ const LendBorrow = ({ initialTab = 'supply' }) => {
   const handleWithdraw = async () => {
     if (!signer || !amount) return;
     setShowModal(true);
+    setIsBlurActive(true);
   };
 
   const handleExecuteWithdraw = async () => {
@@ -257,6 +259,7 @@ const LendBorrow = ({ initialTab = 'supply' }) => {
   const handleBorrow = async () => {
     if (!signer || !amount) return;
     setShowModal(true);
+    setIsBlurActive(true);
   };
 
   const handleExecuteBorrow = async () => {
@@ -301,6 +304,7 @@ const LendBorrow = ({ initialTab = 'supply' }) => {
   const handleRepay = async () => {
     if (!signer || !amount) return;
     setShowModal(true);
+    setIsBlurActive(true);
   };
 
   const handleApproveRepay = async () => {
@@ -479,8 +483,8 @@ const LendBorrow = ({ initialTab = 'supply' }) => {
             key={tab}
             onClick={() => setActiveTab(tab)}
             className={`flex-1 py-2 px-2 sm:px-4 rounded-xl font-medium transition-all text-sm sm:text-base min-h-[40px] whitespace-nowrap ${activeTab === tab
-                ? 'gradient-bg text-white'
-                : 'text-gray-400 hover:text-white'
+              ? 'gradient-bg text-white'
+              : 'text-gray-400 hover:text-white'
               }`}
           >
             {tab.charAt(0).toUpperCase() + tab.slice(1)}
@@ -515,6 +519,7 @@ const LendBorrow = ({ initialTab = 'supply' }) => {
             selectedToken={selectedToken}
             onSelect={(token) => setSelectedToken(token)}
             className="w-full"
+            raised={true}
             balances={
               activeTab === 'supply' || activeTab === 'repay'
                 ? balances  // Show wallet balances for supply/repay
@@ -620,7 +625,10 @@ const LendBorrow = ({ initialTab = 'supply' }) => {
       {/* Transaction Modal */}
       <TransactionModal
         isOpen={showModal}
-        onClose={() => setShowModal(false)}
+        onClose={() => {
+          setShowModal(false);
+          setIsBlurActive(false);
+        }}
         transactionType={activeTab}
         fromToken={selectedToken}
         toToken={selectedToken}

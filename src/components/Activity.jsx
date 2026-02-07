@@ -50,8 +50,8 @@ const Activity = () => {
   useEffect(() => {
     fetchTransactions();
 
-    // Refresh every 30 seconds
-    const interval = setInterval(fetchTransactions, 30000);
+    // Refresh every 60 seconds
+    const interval = setInterval(fetchTransactions, 60000);
     return () => clearInterval(interval);
   }, [fetchTransactions]);
 
@@ -178,8 +178,8 @@ const Activity = () => {
             key={f.value}
             onClick={() => setFilter(f.value)}
             className={`px-3 py-1.5 rounded-xl text-sm font-medium transition-colors whitespace-nowrap min-h-[36px] ${filter === f.value
-                ? 'bg-[#5a8a3a] text-white'
-                : 'bg-[#1a1a1a] text-gray-400 hover:text-white hover:bg-[#252525]'
+              ? 'bg-[#5a8a3a] text-white'
+              : 'bg-[#1a1a1a] text-gray-400 hover:text-white hover:bg-[#252525]'
               }`}
           >
             {f.label}

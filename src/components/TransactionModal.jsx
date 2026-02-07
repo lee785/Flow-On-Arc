@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { X, Loader2, CheckCircle2, Clock, ChevronRight, Gift, Rocket, ExternalLink } from 'lucide-react';
 import { ARC_TESTNET } from '../constants/contracts';
 import { formatUSD } from '../utils/formatters';
@@ -12,15 +13,14 @@ const TransactionModal = ({
   fromAmount,
   toAmount,
   onApprove,
+  onApproveA,
+  onApproveB,
   onExecute,
   requiresApproval = true,
   transactionParams = {},
 }) => {
   const [currentStep, setCurrentStep] = useState(0);
-  const [stepStatus, setStepStatus] = useState({
-    approve: 'pending', // pending, processing, completed, error
-    execute: 'pending',
-  });
+  const [stepStatus, setStepStatus] = useState({}); // Mapping step keys to status
   const [transactionHash, setTransactionHash] = useState(null);
   const [isConfirmed, setIsConfirmed] = useState(false);
   const [gasEstimate, setGasEstimate] = useState('< $0.01');
@@ -29,19 +29,29 @@ const TransactionModal = ({
   const [savedFromAmount, setSavedFromAmount] = useState('');
   const [savedToAmount, setSavedToAmount] = useState('');
 
-  // Reset state and save amounts ONLY when modal opens
   useEffect(() => {
     if (isOpen) {
-      setCurrentStep(0);
-      setStepStatus({ approve: 'pending', execute: 'pending' });
-      setTransactionHash(null);
+      setSavedFromAmount(fromAmount);
+      setSavedToAmount(toAmount);
+      // Reset transaction state for a fresh start
       setIsConfirmed(false);
-      // Save amounts immediately when modal opens
-      setSavedFromAmount(fromAmount || '');
-      setSavedToAmount(toAmount || '');
+      setTransactionHash(null);
+      setCurrentStep(0);
+      setStepStatus({});
+    }
+  }, [isOpen]); // Only depend on isOpen - ignore amount changes
+
+  // Auto-trigger first step when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      // Small delay (300ms) to allow modal animation to start before wallet popup
+      const timer = setTimeout(() => {
+        handleCombined();
+      }, 300);
+      return () => clearTimeout(timer);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen]); // Only depend on isOpen - ignore amount changes
+  }, [isOpen]);
 
   const getTransactionLabel = () => {
     switch (transactionType) {
@@ -57,6 +67,10 @@ const TransactionModal = ({
         return 'Repay';
       case 'faucet':
         return 'Claim Tokens';
+      case 'add_liquidity':
+        return 'Add Liquidity';
+      case 'remove_liquidity':
+        return 'Remove Liquidity';
       default:
         return 'Transaction';
     }
@@ -89,6 +103,14 @@ const TransactionModal = ({
         ];
       case 'faucet':
         return [{ label: 'Claim tokens', key: 'execute' }];
+      case 'add_liquidity':
+        return [
+          { label: `Approve ${fromToken?.symbol || 'Token A'}`, key: 'approveA' },
+          { label: `Approve ${toToken?.symbol || 'Token B'}`, key: 'approveB' },
+          { label: 'Add Liquidity', key: 'execute' },
+        ];
+      case 'remove_liquidity':
+        return [{ label: 'Remove Liquidity', key: 'execute' }];
       default:
         return [{ label: getTransactionLabel(), key: 'execute' }];
     }
@@ -99,20 +121,20 @@ const TransactionModal = ({
 
   const handleExecute = async () => {
     if (!onExecute) return;
-    
+
     setStepStatus(prev => ({ ...prev, execute: 'processing' }));
     try {
       const tx = await onExecute();
       if (tx?.hash) {
         setTransactionHash(tx.hash);
       }
-      
+
       // onExecute handles the tx.wait() and notification through showTransaction
       // so when it returns, the transaction is already confirmed.
-      
+
       setStepStatus(prev => ({ ...prev, execute: 'completed' }));
       setIsConfirmed(true);
-      
+
       // Close modal after 15 seconds
       setTimeout(() => {
         onClose();
@@ -123,33 +145,63 @@ const TransactionModal = ({
     }
   };
 
-  const handleApprove = async () => {
-    if (!onApprove) return;
-    
-    setStepStatus(prev => ({ ...prev, approve: 'processing' }));
+  const handleMultiApprove = async (key) => {
+    const approveFn = key === 'approveA' ? onApproveA : key === 'approveB' ? onApproveB : onApprove;
+    if (!approveFn) return;
+
+    setStepStatus(prev => ({ ...prev, [key]: 'processing' }));
     try {
-      const tx = await onApprove();
+      const tx = await approveFn();
       if (tx?.hash) {
         setTransactionHash(tx.hash);
       }
       if (tx?.wait) {
         await tx.wait();
       }
-      setStepStatus(prev => ({ ...prev, approve: 'completed' }));
-      setCurrentStep(1);
-      
-      // Automatically proceed to execute after approval
-      await handleExecute();
+      setStepStatus(prev => ({ ...prev, [key]: 'completed' }));
+
+      // Auto-advance to next step
+      // Calculate index dynamically to avoid stale closure state
+      const thisStepIndex = steps.findIndex(s => s.key === key);
+      const nextStepIndex = thisStepIndex + 1;
+
+      if (nextStepIndex < steps.length) {
+        setCurrentStep(nextStepIndex);
+        const nextStep = steps[nextStepIndex];
+
+        // Set status to processing so user sees spinner during the 1.5s delay
+        setStepStatus(prev => ({ ...prev, [nextStep.key]: 'processing' }));
+
+        // 1.5s delay for UX, then trigger next wallet action
+        setTimeout(async () => {
+          if (nextStep) {
+            if (nextStep.key === 'execute') {
+              await handleExecute();
+            } else if (nextStep.key.startsWith('approve')) {
+              // Pass the specific key for the next approval
+              await handleMultiApprove(nextStep.key);
+            }
+          }
+        }, 1500);
+      }
+
     } catch (error) {
       console.error('Approval error:', error);
-      setStepStatus(prev => ({ ...prev, approve: 'error' }));
+      setStepStatus(prev => ({ ...prev, [key]: 'error' }));
     }
   };
 
+  const handleApprove = async () => {
+    await handleMultiApprove('approve');
+  };
+
   const handleCombined = async () => {
-    if (requiresApproval && currentStep === 0 && stepStatus.approve === 'pending') {
-      await handleApprove();
-    } else if (stepStatus.execute === 'pending') {
+    const currentStepObj = steps[currentStep];
+    if (!currentStepObj) return;
+
+    if (currentStepObj.key.startsWith('approve')) {
+      await handleMultiApprove(currentStepObj.key);
+    } else if (currentStepObj.key === 'execute') {
       await handleExecute();
     }
   };
@@ -157,7 +209,7 @@ const TransactionModal = ({
   const getStepIcon = (stepIndex) => {
     const step = steps[stepIndex];
     const status = stepStatus[step.key];
-    
+
     if (stepIndex < currentStep) {
       return <CheckCircle2 className="w-5 h-5 text-[#5a8a3a]" />;
     }
@@ -176,44 +228,49 @@ const TransactionModal = ({
   };
 
   const canProceed = () => {
-    if (!requiresApproval) {
-      return stepStatus.execute === 'pending';
-    }
-    if (currentStep === 0) {
-      return stepStatus.approve === 'pending';
-    }
-    return stepStatus.execute === 'pending' && stepStatus.approve === 'completed';
+    const currentStepObj = steps[currentStep];
+    if (!currentStepObj) return false;
+    return stepStatus[currentStepObj.key] === 'pending';
   };
 
   const getButtonText = () => {
-    if (!requiresApproval) {
-      if (stepStatus.execute === 'processing') {
-        return 'Processing...';
-      }
-      return getTransactionLabel();
-    }
+    const currentStepObj = steps[currentStep];
+    if (!currentStepObj) return 'Done';
 
-    if (currentStep === 0) {
-      if (stepStatus.approve === 'processing') {
-        return 'Approving...';
+    if (stepStatus[currentStepObj.key] === 'processing') {
+      if (currentStepObj.key.startsWith('approve')) {
+        const tokenSymbol = currentStepObj.key === 'approveA' ? fromToken?.symbol :
+          currentStepObj.key === 'approveB' ? toToken?.symbol : fromToken?.symbol;
+        return `Approving ${tokenSymbol || 'Token'}...`;
       }
-      return `Approve ${fromToken?.symbol || 'Token'} & ${getTransactionLabel()}`;
-    }
-
-    if (stepStatus.execute === 'processing') {
       return 'Processing...';
     }
+
+    if (currentStepObj.key.startsWith('approve')) {
+      const tokenSymbol = currentStepObj.key === 'approveA' ? fromToken?.symbol :
+        currentStepObj.key === 'approveB' ? toToken?.symbol : fromToken?.symbol;
+      return `Approve ${tokenSymbol || 'Token'}`;
+    }
+
     return getTransactionLabel();
   };
 
   if (!isOpen) return null;
 
+  const truncateAmount = (amount, decimals = 2) => {
+    if (!amount) return '0.00';
+    const str = amount.toString();
+    const parts = str.split('.');
+    if (parts.length === 1) return parseFloat(str).toFixed(decimals);
+    return parts[0] + '.' + parts[1].slice(0, decimals).padEnd(decimals, '0');
+  };
+
   // Transaction Confirmed Screen (Relay Style)
   if (isConfirmed) {
-    return (
-      <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-black/90 backdrop-blur-md">
+    return createPortal(
+      <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-black/20 backdrop-blur-[6px]">
         <div className="bg-[#0a0a0a] border border-[#1a1a1a] p-8 max-w-md w-full mx-4 relative rounded-[32px] shadow-[0_0_50px_rgba(0,0,0,0.8)] animate-in fade-in zoom-in duration-300">
-          
+
           <div className="flex items-center justify-between mb-8">
             <h2 className="text-xl font-bold text-white">Transaction Details</h2>
             <button
@@ -233,15 +290,39 @@ const TransactionModal = ({
                 <CheckCircle2 className="w-6 h-6 text-white" />
               </div>
             </div>
-            <h3 className="text-2xl font-bold text-white">Transaction Completed</h3>
+            <h3 className="text-xl sm:text-2xl font-bold text-white text-center">Transaction Completed</h3>
           </div>
 
           {/* Asset Summary Box (Relay Style) */}
           <div className="bg-[#111111] border border-[#1a1a1a] rounded-2xl p-5 mb-8 text-left space-y-4">
-            {transactionType === 'swap' ? (
+            {transactionType === 'add_liquidity' || transactionType === 'remove_liquidity' ? (
+              <div>
+                <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">
+                  {transactionType === 'add_liquidity' ? 'Added' : 'Removed'}
+                </p>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="flex -space-x-2">
+                      {fromToken?.icon && <img src={fromToken.icon} alt="" className="w-6 h-6 rounded-full border-2 border-[#111]" />}
+                      {toToken?.icon && <img src={toToken.icon} alt="" className="w-6 h-6 rounded-full border-2 border-[#111]" />}
+                    </div>
+                    <span className="text-base sm:text-lg font-bold text-white">
+                      {truncateAmount(savedFromAmount)} {fromToken?.symbol} + {truncateAmount(savedToAmount)} {toToken?.symbol}
+                    </span>
+                  </div>
+                  {transactionHash && (
+                    <span className="text-[10px] font-mono text-[#5a8a3a] bg-[#5a8a3a]/10 px-2 py-1 rounded-md">
+                      {transactionHash.slice(0, 6)}...{transactionHash.slice(-4)}
+                    </span>
+                  )}
+                </div>
+              </div>
+            ) : transactionType === 'swap' ? (
               <>
                 <div>
-                  <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Sent</p>
+                  <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">
+                    Sent
+                  </p>
                   <div className="flex items-center gap-3">
                     {fromToken?.icon ? (
                       <img src={fromToken.icon} alt="" className="w-6 h-6 rounded-full" />
@@ -250,10 +331,10 @@ const TransactionModal = ({
                         <Gift className="w-3.5 h-3.5 text-[#5a8a3a]" />
                       </div>
                     )}
-                    <span className="text-lg font-bold text-white">{savedFromAmount} {fromToken?.symbol}</span>
+                    <span className="text-base sm:text-lg font-bold text-white">{truncateAmount(savedFromAmount)} {fromToken?.symbol}</span>
                   </div>
                 </div>
-                
+
                 <div className="h-px bg-[#1a1a1a] w-full" />
 
                 <div>
@@ -267,8 +348,8 @@ const TransactionModal = ({
                           <Gift className="w-3.5 h-3.5 text-[#5a8a3a]" />
                         </div>
                       )}
-                      <span className="text-lg font-bold text-white">
-                        {savedToAmount} {toToken?.symbol}
+                      <span className="text-base sm:text-lg font-bold text-white">
+                        {truncateAmount(savedToAmount)} {toToken?.symbol}
                       </span>
                     </div>
                     {transactionHash && (
@@ -283,10 +364,10 @@ const TransactionModal = ({
               <div>
                 <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">
                   {transactionType === 'supply' ? 'Supplied' :
-                   transactionType === 'borrow' ? 'Borrowed' :
-                   transactionType === 'repay' ? 'Repaid' :
-                   transactionType === 'withdraw' ? 'Withdrawn' :
-                   transactionType === 'faucet' ? 'Claimed' : 'Amount'}
+                    transactionType === 'borrow' ? 'Borrowed' :
+                      transactionType === 'repay' ? 'Repaid' :
+                        transactionType === 'withdraw' ? 'Withdrawn' :
+                          transactionType === 'faucet' ? 'Claimed' : 'Amount'}
                 </p>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
@@ -301,8 +382,8 @@ const TransactionModal = ({
                         )}
                       </div>
                     )}
-                    <span className="text-lg font-bold text-white">
-                      {savedFromAmount} {fromToken?.symbol || ''}
+                    <span className="text-base sm:text-lg font-bold text-white">
+                      {truncateAmount(savedFromAmount)} {fromToken?.symbol || ''}
                     </span>
                   </div>
                   {transactionHash && (
@@ -324,7 +405,7 @@ const TransactionModal = ({
             >
               View Details
             </a>
-            
+
             <button
               onClick={onClose}
               className="w-full bg-[#5a8a3a] hover:bg-[#6b9a4a] text-white py-4 rounded-2xl font-bold text-sm transition-all shadow-lg shadow-[#5a8a3a]/20 uppercase tracking-wider"
@@ -333,12 +414,13 @@ const TransactionModal = ({
             </button>
           </div>
         </div>
-      </div>
+      </div>,
+      document.body
     );
   }
 
-  return (
-    <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-black/90 backdrop-blur-md">
+  return createPortal(
+    <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-black/20 backdrop-blur-[6px]">
       <div className="bg-[#0a0a0a] border border-[#1a1a1a] p-6 max-w-md w-full mx-4 relative rounded-[32px] shadow-[0_0_50px_rgba(0,0,0,0.8)]">
         {/* Header with Close Button */}
         <div className="flex items-center justify-between mb-6">
@@ -351,8 +433,32 @@ const TransactionModal = ({
           </button>
         </div>
 
+        {/* Liquidity Overview - Pair Icons */}
+        {(transactionType === 'add_liquidity' || transactionType === 'remove_liquidity') && (
+          <div className="mb-6 bg-[#111111] border border-[#2a2a2a] rounded-2xl p-6">
+            <div className="text-center">
+              <div className="flex items-center justify-center mb-4">
+                <div className="relative flex items-center justify-center">
+                  <div className="w-16 h-16 rounded-full bg-black border-2 border-[#5cb849]/30 flex items-center justify-center z-10 transition-transform hover:scale-110">
+                    <img src={fromToken.icon} alt={fromToken.symbol} className="w-10 h-10 rounded-full" />
+                  </div>
+                  <div className="w-16 h-16 rounded-full bg-black border-2 border-[#5cb849]/30 flex items-center justify-center -ml-6 transition-transform hover:scale-110">
+                    <img src={toToken.icon} alt={toToken.symbol} className="w-10 h-10 rounded-full" />
+                  </div>
+                </div>
+              </div>
+              <p className="text-white text-lg font-black tracking-tight">
+                {fromAmount} {fromToken.symbol} + {toAmount} {toToken.symbol}
+              </p>
+              <p className="text-[10px] text-[#5cb849] font-bold uppercase tracking-widest mt-1">
+                {transactionType === 'remove_liquidity' ? 'Removing Liquidity' : 'Providing Liquidity'}
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* Transaction Overview - Wrapped in bordered card like Relay */}
-        {transactionType !== 'faucet' && (
+        {(transactionType !== 'faucet' && transactionType !== 'add_liquidity' && transactionType !== 'remove_liquidity') && (
           <div className="mb-6 bg-[#111111] border border-[#2a2a2a] rounded-2xl p-4">
             {/* For Swap: Show two tokens with arrow */}
             {transactionType === 'swap' ? (
@@ -437,7 +543,7 @@ const TransactionModal = ({
             <div className="relative">
               {/* Vertical connecting line */}
               <div className="absolute left-[10px] top-6 bottom-6 w-[2px] bg-[#2a2a2a]" />
-              
+
               <div className="space-y-4">
                 {steps.map((step, index) => (
                   <div key={step.key} className="flex items-center gap-3 relative">
@@ -530,7 +636,8 @@ const TransactionModal = ({
           </a>
         )}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 

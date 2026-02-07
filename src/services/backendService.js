@@ -1,167 +1,186 @@
 // backendService.js
 import { logger } from '../utils/logger';
 
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
+const SUBGRAPH_URL = import.meta.env.VITE_SUBGRAPH_URL;
 
-if (!BACKEND_URL) {
-  throw new Error('VITE_BACKEND_URL environment variable is required');
+/**
+ * Generic GraphQL query helper
+ */
+async function querySubgraph(query, variables = {}) {
+  if (!SUBGRAPH_URL) {
+    logger.error('VITE_SUBGRAPH_URL is not defined');
+    return null;
+  }
+
+  try {
+    const response = await fetch(SUBGRAPH_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query, variables }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Subgraph responded with status: ${response.status}`);
+    }
+
+    const { data, errors } = await response.json();
+    if (errors) {
+      console.error('Subgraph errors:', errors);
+      throw new Error(errors[0].message);
+    }
+    return data;
+  } catch (error) {
+    logger.error('Error querying subgraph:', error);
+    return null;
+  }
 }
 
 /**
- * Fetch protocol statistics from backend
+ * Fetch protocol statistics from subgraph
  */
 export async function fetchBackendStats() {
-  try {
-    const response = await fetch(`${BACKEND_URL}/api/stats`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error(`Backend responded with status: ${response.status}`);
+  const subgraphData = await querySubgraph(`
+    query GetProtocolStats {
+      protocols(first: 1) {
+        totalTransactions
+        totalVolumeUSD
+        swapCount
+        supplyCount
+        withdrawCount
+        borrowCount
+        repayCount
+        claimCount
+        lastUpdated
+      }
     }
+  `);
 
-    const data = await response.json();
-    
+  if (subgraphData && subgraphData.protocols && subgraphData.protocols[0]) {
+    const p = subgraphData.protocols[0];
     return {
-      totalTransactions: data.totalTransactions || 0,
-      totalVolume: data.totalVolume || 0,
-      swaps: data.swaps || 0,
-      supplies: data.supplies || 0,
-      withdraws: data.withdraws || 0,
-      borrows: data.borrows || 0,
-      repays: data.repays || 0,
-      claims: data.claims || 0,
-      lastUpdated: data.lastUpdated,
+      totalTransactions: parseInt(p.totalTransactions),
+      totalVolume: parseFloat(p.totalVolumeUSD),
+      swaps: parseInt(p.swapCount),
+      supplies: parseInt(p.supplyCount),
+      withdraws: parseInt(p.withdrawCount),
+      borrows: parseInt(p.borrowCount),
+      repays: parseInt(p.repayCount),
+      claims: parseInt(p.claimCount),
+      lastUpdated: parseInt(p.lastUpdated) * 1000,
     };
-  } catch (error) {
-    logger.error('Error fetching backend stats:', error);
-    throw error;
   }
-}
 
-// ADD THIS NEW FUNCTION
-/**
- * Fetch stats breakdown by transaction type
- */
-export async function fetchStatsBreakdown() {
-  try {
-    const response = await fetch(`${BACKEND_URL}/api/stats/breakdown`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error(`Backend responded with status: ${response.status}`);
-    }
-
-    const data = await response.json();
-    
-    return {
-      breakdown: data.breakdown || []
-    };
-  } catch (error) {
-    logger.error('Error fetching stats breakdown:', error);
-    throw error;
-  }
+  return {
+    totalTransactions: 0,
+    totalVolume: 0,
+    swaps: 0,
+    supplies: 0,
+    withdraws: 0,
+    borrows: 0,
+    repays: 0,
+    claims: 0,
+    lastUpdated: Date.now(),
+  };
 }
 
 /**
- * Fetch recent transactions from backend
+ * Fetch recent transactions from subgraph
  */
 export async function fetchBackendTransactions(limit = 50, offset = 0, type = null) {
-  try {
-    let url = `${BACKEND_URL}/api/transactions?limit=${limit}&offset=${offset}`;
-    if (type) {
-      url += `&type=${type}`;
+  let where = {};
+  if (type) where.type = type;
+
+  const subgraphData = await querySubgraph(`
+    query GetTransactions($limit: Int, $offset: Int, $where: Transaction_filter) {
+      transactions(
+        first: $limit, 
+        skip: $offset, 
+        orderBy: timestamp, 
+        orderDirection: desc,
+        where: $where
+      ) {
+        id
+        txHash
+        blockNumber
+        timestamp
+        type
+        wallet
+        tokenIn
+        tokenOut
+        amountIn
+        amountOut
+        usdValue
+      }
     }
+  `, { limit, offset, where });
 
-    const response = await fetch(url, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
+  if (subgraphData && subgraphData.transactions) {
+    const txs = subgraphData.transactions.map(tx => ({
+      ...tx,
+      timestamp: parseInt(tx.timestamp) * 1000,
+      amountIn: parseFloat(tx.amountIn),
+      amountOut: tx.amountOut ? parseFloat(tx.amountOut) : 0,
+      usdValue: parseFloat(tx.usdValue),
+      walletShort: `${tx.wallet.slice(0, 6)}...${tx.wallet.slice(-4)}`,
+      explorerUrl: `https://arcscan.io/tx/${tx.txHash}`
+    }));
 
-    if (!response.ok) {
-      throw new Error(`Backend responded with status: ${response.status}`);
-    }
-
-    const data = await response.json();
-    
     return {
-      transactions: data.transactions || [],
-      total: data.total || 0,
-      limit: data.limit,
-      offset: data.offset,
+      transactions: txs,
+      total: txs.length < limit ? offset + txs.length : offset + limit + 100,
+      limit,
+      offset,
     };
-  } catch (error) {
-    logger.error('Error fetching backend transactions:', error);
-    throw error;
   }
+
+  return { transactions: [], total: 0, limit, offset };
 }
 
 /**
  * Fetch transactions for a specific wallet
  */
 export async function fetchWalletTransactions(walletAddress, limit = 20) {
-  try {
-    const response = await fetch(
-      `${BACKEND_URL}/api/transactions/wallet/${walletAddress}?limit=${limit}`,
-      {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+  const subgraphData = await querySubgraph(`
+    query GetWalletTransactions($wallet: String, $limit: Int) {
+      transactions(
+        first: $limit, 
+        orderBy: timestamp, 
+        orderDirection: desc,
+        where: { wallet: $wallet }
+      ) {
+        id
+        txHash
+        blockNumber
+        timestamp
+        type
+        tokenIn
+        amountIn
+        usdValue
       }
-    );
-
-    if (!response.ok) {
-      throw new Error(`Backend responded with status: ${response.status}`);
     }
+  `, { wallet: walletAddress.toLowerCase(), limit });
 
-    const data = await response.json();
-    return data.transactions || [];
-  } catch (error) {
-    logger.error('Error fetching wallet transactions:', error);
-    throw error;
+  if (subgraphData && subgraphData.transactions) {
+    return subgraphData.transactions.map(tx => ({
+      ...tx,
+      timestamp: parseInt(tx.timestamp) * 1000,
+      amountIn: parseFloat(tx.amountIn),
+      usdValue: parseFloat(tx.usdValue),
+    }));
   }
+
+  return [];
 }
 
-/**
- * Check backend health
- */
+export function getBackendUrl() {
+  return SUBGRAPH_URL;
+}
+
 export async function checkBackendHealth() {
   try {
-    const response = await fetch(`${BACKEND_URL}/api/health`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
-
-    if (!response.ok) {
-      return { healthy: false, error: `Status: ${response.status}` };
-    }
-
-    const data = await response.json();
-    return {
-      healthy: data.status === 'healthy',
-      database: data.database,
-      indexer: data.indexer,
-    };
-  } catch (error) {
-    return { healthy: false, error: error.message };
+    const data = await querySubgraph(`{ _meta { block { number } } }`);
+    return { healthy: !!data, indexer: 'goldsky', block: data?._meta?.block?.number };
+  } catch (e) {
+    return { healthy: false, error: e.message };
   }
-}
-
-/**
- * Get backend URL (for display purposes)
- */
-export function getBackendUrl() {
-  return BACKEND_URL;
 }

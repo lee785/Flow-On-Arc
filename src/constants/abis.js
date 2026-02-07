@@ -23,10 +23,22 @@ export const SWAP_ROUTER_ABI = [
   'function swapExactTokensForTokens(uint256 amountIn, uint256 amountOutMin, address[] calldata path, address to, uint256 deadline) external returns (uint256[] memory amounts)',
   'function getAmountsOut(uint256 amountIn, address[] memory path) public view returns (uint256[] memory amounts)',
   'function getPoolId(address tokenA, address tokenB) public pure returns (bytes32)',
-  'function addLiquidity(address tokenA, address tokenB, uint256 amountA, uint256 amountB) external',
   'function pools(bytes32 poolId) public view returns (address token0, address token1, uint256 reserve0, uint256 reserve1)',
+  'function userLiquidity(bytes32 poolId, address user) public view returns (uint256)',
+  'function totalLiquidity(bytes32 poolId) public view returns (uint256)',
   'event Swap(address indexed user, address tokenIn, address tokenOut, uint256 amountIn, uint256 amountOut)',
-  'event LiquidityAdded(address indexed user, address token0, address token1, uint256 amount0, uint256 amount1)'
+];
+
+// Liquidity Pool ABI
+export const LIQUIDITY_POOL_ABI = [
+  'function addLiquidity(address tokenA, address tokenB, uint256 amountA, uint256 amountB) external',
+  'function removeLiquidity(address tokenA, address tokenB, uint256 shares) external',
+  'function getPoolId(address tokenA, address tokenB) public pure returns (bytes32)',
+  'function pools(bytes32 poolId) public view returns (address token0, address token1, uint256 reserve0, uint256 reserve1)',
+  'function userLiquidity(bytes32 poolId, address user) public view returns (uint256)',
+  'function totalLiquidity(bytes32 poolId) public view returns (uint256)',
+  'event LiquidityAdded(address indexed user, address token0, address token1, uint256 amount0, uint256 amount1)',
+  'event LiquidityRemoved(address indexed user, address token0, address token1, uint256 amount0, uint256 amount1)',
 ];
 
 // Lending Pool ABI

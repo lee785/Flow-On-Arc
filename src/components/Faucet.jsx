@@ -15,7 +15,7 @@ const Faucet = () => {
   const provider = useEthersProvider();
   const signer = useEthersSigner();
   const { balances, fetchBalances } = useBalances(provider, address);
-  const { showTransaction } = useNotifications();
+  const { showTransaction, setIsBlurActive } = useNotifications();
 
   const [claimable, setClaimable] = useState({
     catAmount: 0n,
@@ -74,6 +74,7 @@ const Faucet = () => {
   const handleClaim = async () => {
     if (!signer || !claimable.canClaim) return;
     setShowModal(true);
+    setIsBlurActive(true);
   };
 
   const handleExecuteClaim = async () => {
@@ -214,7 +215,10 @@ const Faucet = () => {
       {/* Transaction Modal */}
       <TransactionModal
         isOpen={showModal}
-        onClose={() => setShowModal(false)}
+        onClose={() => {
+          setShowModal(false);
+          setIsBlurActive(false);
+        }}
         transactionType="faucet"
         fromToken={null}
         toToken={null}

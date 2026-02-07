@@ -28,29 +28,29 @@ const Notification = ({ notification, onDismiss }) => {
 
   const getTitle = () => {
     if (notification.title) return notification.title;
-    
+
     switch (notification.action) {
       case 'swap':
-        return notification.type === 'pending' ? 'Swapping tokens...' : 
-               notification.type === 'success' ? 'Swap successful' : 'Swap failed';
+        return notification.type === 'pending' ? 'Swapping tokens...' :
+          notification.type === 'success' ? 'Swap successful' : 'Swap failed';
       case 'supply':
-        return notification.type === 'pending' ? 'Supplying collateral...' : 
-               notification.type === 'success' ? 'Collateral supplied' : 'Supply failed';
+        return notification.type === 'pending' ? 'Supplying collateral...' :
+          notification.type === 'success' ? 'Collateral supplied' : 'Supply failed';
       case 'withdraw':
-        return notification.type === 'pending' ? 'Withdrawing collateral...' : 
-               notification.type === 'success' ? 'Collateral withdrawn' : 'Withdraw failed';
+        return notification.type === 'pending' ? 'Withdrawing collateral...' :
+          notification.type === 'success' ? 'Collateral withdrawn' : 'Withdraw failed';
       case 'borrow':
-        return notification.type === 'pending' ? 'Borrowing tokens...' : 
-               notification.type === 'success' ? 'Tokens borrowed' : 'Borrow failed';
+        return notification.type === 'pending' ? 'Borrowing tokens...' :
+          notification.type === 'success' ? 'Tokens borrowed' : 'Borrow failed';
       case 'repay':
-        return notification.type === 'pending' ? 'Repaying tokens...' : 
-               notification.type === 'success' ? 'Tokens repaid' : 'Repay failed';
+        return notification.type === 'pending' ? 'Repaying tokens...' :
+          notification.type === 'success' ? 'Tokens repaid' : 'Repay failed';
       case 'approve':
-        return notification.type === 'pending' ? 'Approving token...' : 
-               notification.type === 'success' ? 'Token approved' : 'Approval failed';
+        return notification.type === 'pending' ? 'Approving token...' :
+          notification.type === 'success' ? 'Token approved' : 'Approval failed';
       case 'claim':
-        return notification.type === 'pending' ? 'Claiming tokens...' : 
-               notification.type === 'success' ? 'Tokens claimed' : 'Claim failed';
+        return notification.type === 'pending' ? 'Claiming tokens...' :
+          notification.type === 'success' ? 'Tokens claimed' : 'Claim failed';
       default:
         return 'Transaction';
     }
@@ -98,20 +98,21 @@ const Notification = ({ notification, onDismiss }) => {
 
 export const NotificationProvider = ({ children }) => {
   const [notifications, setNotifications] = useState([]);
+  const [isBlurActive, setIsBlurActive] = useState(false);
 
   const addNotification = useCallback((notification) => {
     const id = Date.now() + Math.random();
     const newNotification = { ...notification, id };
-    
+
     setNotifications((prev) => [...prev, newNotification]);
-    
+
     // Auto-dismiss success/error notifications after 5 seconds
     if (notification.type !== 'pending') {
       setTimeout(() => {
         dismissNotification(id);
       }, 5000);
     }
-    
+
     return id;
   }, []);
 
@@ -135,7 +136,7 @@ export const NotificationProvider = ({ children }) => {
 
     try {
       const tx = await transactionPromise;
-      
+
       // Update with transaction hash
       if (tx.hash) {
         updateNotification(pendingId, {
@@ -185,7 +186,7 @@ export const NotificationProvider = ({ children }) => {
     } catch (error) {
       // Show error
       dismissNotification(pendingId);
-      
+
       let errorMessage = error.message || 'Unknown error';
       if (error.code === 4001) {
         errorMessage = 'Transaction rejected by user';
@@ -211,6 +212,8 @@ export const NotificationProvider = ({ children }) => {
         updateNotification,
         dismissNotification,
         showTransaction,
+        isBlurActive,
+        setIsBlurActive,
       }}
     >
       {children}

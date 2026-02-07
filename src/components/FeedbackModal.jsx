@@ -3,7 +3,7 @@ import { X, MessageSquare, CheckCircle, Loader2 } from 'lucide-react';
 
 const FeedbackModal = ({ isOpen, onClose }) => {
   const TALLY_FORM_URL = 'https://tally.so/embed/OD4AvK?alignLeft=1&transparentBackground=1&dynamicHeight=1&formEventsForwarding=1';
-  
+
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [countdown, setCountdown] = useState(5);
@@ -71,21 +71,19 @@ const FeedbackModal = ({ isOpen, onClose }) => {
   return (
     <>
       {/* Modal - Always rendered but hidden when closed (keeps iframe loaded) */}
-      <div className={`fixed inset-0 z-[2000] flex items-center justify-center p-4 transition-all duration-200 ${
-        isOpen ? 'opacity-100 pointer-events-auto visible' : 'opacity-0 pointer-events-none invisible'
-      }`}>
+      <div className={`fixed inset-0 z-[2000] flex items-center justify-center p-4 transition-all duration-200 ${isOpen ? 'opacity-100 pointer-events-auto visible' : 'opacity-0 pointer-events-none invisible'
+        }`}>
         {/* Backdrop with blur */}
         {isOpen && (
-          <div 
-            className="absolute inset-0 bg-black/80 backdrop-blur-md transition-opacity duration-200" 
+          <div
+            className="absolute inset-0 bg-black/20 backdrop-blur-[6px] transition-opacity duration-200"
             onClick={onClose}
           />
         )}
-        
-        <div className={`relative z-10 w-full max-w-[600px] bg-[#0a0a0a] border border-[#1a1a1a] rounded-[40px] shadow-[0_0_50px_rgba(0,0,0,0.8)] overflow-hidden flex flex-col max-h-[90vh] transition-all duration-200 ${
-          isOpen ? 'scale-100 opacity-100' : 'scale-95 opacity-0'
-        }`}>
-          
+
+        <div className={`relative z-10 w-full max-w-[600px] bg-[#0a0a0a] border border-[#1a1a1a] rounded-[40px] shadow-[0_0_50px_rgba(0,0,0,0.8)] overflow-hidden flex flex-col max-h-[90vh] transition-all duration-200 ${isOpen ? 'scale-100 opacity-100' : 'scale-95 opacity-0'
+          }`}>
+
           {/* Header */}
           <div className="p-6 border-b border-[#1a1a1a] flex items-center justify-between bg-[#111111]/50 shrink-0">
             <div className="flex items-center gap-3">
@@ -101,8 +99,8 @@ const FeedbackModal = ({ isOpen, onClose }) => {
                   {isSubmitted ? 'Thank You!' : 'Send Feedback'}
                 </h2>
                 <p className="text-gray-500 text-xs">
-                  {isSubmitted 
-                    ? `Closing in ${countdown} seconds...` 
+                  {isSubmitted
+                    ? `Closing in ${countdown} seconds...`
                     : 'Help us improve the Flow On Arc experience'}
                 </p>
               </div>
@@ -114,7 +112,7 @@ const FeedbackModal = ({ isOpen, onClose }) => {
               <X className="w-5 h-5" />
             </button>
           </div>
-          
+
           {/* The Form Container */}
           <div className="flex-1 overflow-y-auto custom-scrollbar bg-[#0a0a0a] min-h-[627px] relative">
             {/* Loading spinner - only shows if iframe hasn't loaded yet */}
@@ -126,7 +124,7 @@ const FeedbackModal = ({ isOpen, onClose }) => {
                 </div>
               </div>
             )}
-            
+
             {/* Success message overlay */}
             {isSubmitted && (
               <div className="absolute inset-0 flex items-center justify-center bg-[#0a0a0a] z-10">
@@ -146,7 +144,7 @@ const FeedbackModal = ({ isOpen, onClose }) => {
                 </div>
               </div>
             )}
-            
+
             {/* Iframe - Always rendered (preloaded), just hidden when loading/submitted */}
             <iframe
               ref={iframeRef}
@@ -159,10 +157,9 @@ const FeedbackModal = ({ isOpen, onClose }) => {
               title="Feedback Form"
               scrolling="no"
               onLoad={handleIframeLoad}
-              className={`w-full transition-opacity duration-300 ${
-                isLoading || isSubmitted ? 'opacity-0 pointer-events-none' : 'opacity-100'
-              }`}
-              style={{ 
+              className={`w-full transition-opacity duration-300 ${isLoading || isSubmitted ? 'opacity-0 pointer-events-none' : 'opacity-100'
+                }`}
+              style={{
                 background: 'transparent',
                 border: 'none',
                 overflow: 'hidden',
@@ -172,7 +169,7 @@ const FeedbackModal = ({ isOpen, onClose }) => {
               Loading…
             </iframe>
           </div>
-          
+
           {/* Footer */}
           <div className="p-4 border-t border-[#1a1a1a] bg-[#111111]/30 text-center shrink-0">
             <p className="text-[10px] text-gray-600 uppercase tracking-widest font-bold">

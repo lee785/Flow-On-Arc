@@ -7,7 +7,8 @@ const TokenSelector = ({
   onSelect,
   disabled = false,
   className = '',
-  balances = {}
+  balances = {},
+  raised = false
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
@@ -159,12 +160,12 @@ const TokenSelector = ({
           ═══════════════════════════════════════════════════════════════════ */}
       {isOpen && (
         <div
-          className="fixed inset-0 z-[9999] flex items-center justify-center p-4"
+          className={`fixed inset-0 z-[9999] flex justify-center p-4 ${raised ? 'items-center pb-[30rem]' : 'items-center'}`}
           style={{
             // Overlay: rgba(0, 0, 0, 0.7) with backdrop blur
-            backgroundColor: isAnimating ? 'rgba(0, 0, 0, 0.7)' : 'rgba(0, 0, 0, 0)',
-            backdropFilter: isAnimating ? 'blur(8px)' : 'blur(0px)',
-            WebkitBackdropFilter: isAnimating ? 'blur(8px)' : 'blur(0px)',
+            backgroundColor: isAnimating ? 'rgba(0, 0, 0, 0.2)' : 'rgba(0, 0, 0, 0)',
+            backdropFilter: isAnimating ? 'blur(6px)' : 'blur(0px)',
+            WebkitBackdropFilter: isAnimating ? 'blur(6px)' : 'blur(0px)',
             transition: 'all 250ms ease-out',
           }}
         >
@@ -242,8 +243,8 @@ const TokenSelector = ({
                         key={token.symbol}
                         onClick={() => handleSelect(token)}
                         className={`flex items-center justify-center gap-1.5 py-2 rounded-full font-medium transition-all duration-200 ${isActive
-                            ? 'bg-[#5a8a3a] text-white shadow-lg shadow-[#5a8a3a]/20'
-                            : 'bg-[#3a3a3a] text-[#9ca3af] hover:bg-[#454545] hover:text-white'
+                          ? 'bg-[#5a8a3a] text-white shadow-lg shadow-[#5a8a3a]/20'
+                          : 'bg-[#3a3a3a] text-[#9ca3af] hover:bg-[#454545] hover:text-white'
                           }`}
                       >
                         <img
@@ -283,8 +284,8 @@ const TokenSelector = ({
                         key={token.symbol}
                         onClick={() => handleSelect(token)}
                         className={`w-full flex items-center justify-between p-4 rounded-xl transition-all duration-200 cursor-pointer group ${isSelected
-                            ? 'bg-[#2a2a2a] border border-[#5a8a3a]/40 shadow-lg shadow-[#5a8a3a]/10'
-                            : 'bg-[#2a2a2a] border border-transparent hover:bg-[#353535] hover:border-[#3a3a3a]'
+                          ? 'bg-[#2a2a2a] border border-[#5a8a3a]/40 shadow-lg shadow-[#5a8a3a]/10'
+                          : 'bg-[#2a2a2a] border border-transparent hover:bg-[#353535] hover:border-[#3a3a3a]'
                           }`}
                       >
                         {/* Left side: Icon + Name */}

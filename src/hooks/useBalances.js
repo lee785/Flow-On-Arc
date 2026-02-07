@@ -9,6 +9,9 @@ export function useBalances(provider, address) {
     DARC: '0.00',
     PANDA: '0.00',
     USDC: '0.00',
+    LP_USDC_CAT: '0.00',
+    LP_USDC_DARC: '0.00',
+    LP_USDC_PANDA: '0.00',
   });
 
   const [rawBalances, setRawBalances] = useState({
@@ -25,6 +28,9 @@ export function useBalances(provider, address) {
         DARC: '0.00',
         PANDA: '0.00',
         USDC: '0.00',
+        LP_USDC_CAT: '0.00',
+        LP_USDC_DARC: '0.00',
+        LP_USDC_PANDA: '0.00',
       });
       setRawBalances({
         CAT: 0n,
@@ -38,12 +44,15 @@ export function useBalances(provider, address) {
     try {
       const raw = await getAllBalances(provider, address);
       setRawBalances(raw);
-      
+
       setBalances({
         CAT: formatTokenAmount(raw.CAT, TOKENS.CAT.decimals),
         DARC: formatTokenAmount(raw.DARC, TOKENS.DARC.decimals),
         PANDA: formatTokenAmount(raw.PANDA, TOKENS.PANDA.decimals),
         USDC: formatTokenAmount(raw.USDC, TOKENS.USDC.decimals),
+        LP_USDC_CAT: formatTokenAmount(raw.LP_USDC_CAT, 18),
+        LP_USDC_DARC: formatTokenAmount(raw.LP_USDC_DARC, 18),
+        LP_USDC_PANDA: formatTokenAmount(raw.LP_USDC_PANDA, 18),
       });
     } catch (error) {
       console.error('Error fetching balances in hook:', error);
@@ -56,7 +65,7 @@ export function useBalances(provider, address) {
       // Fetch immediately
       fetchBalances();
       // Then set up interval
-      const interval = setInterval(fetchBalances, 10000); // Refresh every 10 seconds
+      const interval = setInterval(fetchBalances, 30000); // Refresh every 30 seconds
       return () => clearInterval(interval);
     } else {
       // Reset balances if no provider or address
@@ -65,6 +74,9 @@ export function useBalances(provider, address) {
         DARC: '0.00',
         PANDA: '0.00',
         USDC: '0.00',
+        LP_USDC_CAT: '0.00',
+        LP_USDC_DARC: '0.00',
+        LP_USDC_PANDA: '0.00',
       });
       setRawBalances({
         CAT: 0n,

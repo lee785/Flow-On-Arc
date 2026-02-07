@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { X, Bell, Rocket, Shield, Zap, ChevronDown, ChevronUp } from 'lucide-react';
 
 const ChangelogModal = ({ isOpen, onClose }) => {
-  const [expandedVersion, setExpandedVersion] = useState('v1.4.6');
+  const [expandedVersion, setExpandedVersion] = useState('v1.5.0');
 
   // Handle escape key
   useEffect(() => {
@@ -16,6 +16,15 @@ const ChangelogModal = ({ isOpen, onClose }) => {
   if (!isOpen) return null;
 
   const updates = [
+    {
+      version: "v1.5.0",
+      date: "February 7, 2026",
+      changes: [
+        { type: 'feature', text: 'Added Pool: Users can now provide liquidity to AMM pools directly through the new Pool interface.' },
+        { type: 'fix', text: 'Fixed several dApp bugs related to transaction state persistence and UI alignment across different screen sizes.' },
+        { type: 'improvement', text: 'Backend Migration: Migrated indexing infrastructure from a self-hosted solution to Goldsky for near-instant data synchronization and 100% uptime.' }
+      ]
+    },
     {
       version: "v1.4.6",
       date: "January 15, 2026",
@@ -141,11 +150,11 @@ const ChangelogModal = ({ isOpen, onClose }) => {
   return (
     <div className="fixed inset-0 z-[2000] flex items-center justify-center p-4">
       {/* Backdrop */}
-      <div 
-        className="absolute inset-0 bg-black/60 backdrop-blur-md" 
-        onClick={onClose} 
+      <div
+        className="absolute inset-0 bg-black/20 backdrop-blur-[6px]"
+        onClick={onClose}
       />
-      
+
       {/* Modal */}
       <div className="relative z-10 w-full max-w-[552px] bg-[#0a0a0a] border border-[#1a1a1a] rounded-[40px] shadow-[0_0_50px_rgba(0,0,0,0.8)] overflow-hidden flex flex-col max-h-[90vh]">
         {/* Header */}
@@ -156,12 +165,12 @@ const ChangelogModal = ({ isOpen, onClose }) => {
               <Bell className="w-5 h-5 fill-white" />
             </div>
             <div>
-              <h2 className="font-bold text-xl leading-tight">Changelog</h2>
+              <h2 className="font-bold text-xl leading-tight">Flow Updates</h2>
               <p className="text-white/70 text-xs">Latest updates and improvements</p>
             </div>
           </div>
-          <button 
-            onClick={onClose} 
+          <button
+            onClick={onClose}
             className="p-2 hover:bg-white/20 rounded-full transition-all relative z-10 group"
           >
             <X className="w-5 h-5 text-white group-hover:rotate-90 transition-transform" />
@@ -172,20 +181,18 @@ const ChangelogModal = ({ isOpen, onClose }) => {
         <div className="p-6 flex-1 overflow-y-auto custom-scrollbar bg-gradient-to-b from-[#0a0a0a] to-[#121212] min-h-[575px]">
           <div className="space-y-4">
             {updates.map((update, idx) => (
-              <div 
+              <div
                 key={update.version}
-                className={`border border-[#1a1a1a] rounded-2xl overflow-hidden transition-all duration-300 ${
-                  expandedVersion === update.version ? 'bg-[#1a1a1a]/40 ring-1 ring-[#5a8a3a]/30' : 'bg-[#111111]'
-                }`}
+                className={`border border-[#1a1a1a] rounded-2xl overflow-hidden transition-all duration-300 ${expandedVersion === update.version ? 'bg-[#1a1a1a]/40 ring-1 ring-[#5a8a3a]/30' : 'bg-[#111111]'
+                  }`}
               >
                 <button
                   onClick={() => setExpandedVersion(expandedVersion === update.version ? null : update.version)}
                   className="w-full p-4 flex items-center justify-between hover:bg-white/5 transition-colors"
                 >
                   <div className="flex items-center gap-3">
-                    <span className={`text-sm font-bold px-2 py-1 rounded-md ${
-                      idx === 0 ? 'bg-[#5a8a3a]/20 text-[#5cb849]' : 'bg-gray-800 text-gray-400'
-                    }`}>
+                    <span className={`text-sm font-bold px-2 py-1 rounded-md ${idx === 0 ? 'bg-[#5a8a3a]/20 text-[#5cb849]' : 'bg-gray-800 text-gray-400'
+                      }`}>
                       {update.version}
                     </span>
                     <span className="text-xs text-gray-500">{update.date}</span>

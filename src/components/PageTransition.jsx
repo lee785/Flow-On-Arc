@@ -27,12 +27,17 @@ const PageTransition = ({ isVisible, onComplete }) => {
       <div className="absolute top-0 left-0 h-1 bg-[#5cb849] transition-all duration-[1500ms] ease-out" style={{ width: isVisible ? '100%' : '0%' }}></div>
 
       <div className="relative">
-        <FlowLogo className="w-24 h-24 filter drop-shadow-[0_0_20px_rgba(92,184,73,0.5)] animate-pulse" />
+        <img
+          src="/icons/Flow (2).png"
+          alt="Flow"
+          style={{ width: '105px', height: '50px' }}
+          className="filter drop-shadow-[0_0_20px_rgba(92,184,73,0.5)] animate-pulse"
+        />
       </div>
 
-      <div className="mt-8 flex flex-col items-center">
-        <h2 className="text-2xl font-bold gradient-text animate-pulse">Flowing...</h2>
-        <p className="text-gray-500 text-sm mt-2 font-medium tracking-widest uppercase">Everything is better in Motion</p>
+      <div className="mt-1 flex flex-col items-center">
+        <h2 className="text-2xl font-bold gradient-text animate-pulse">Flowing</h2>
+        <p className="text-gray-500 text-sm mt-2 font-medium tracking-widest uppercase">Everything is better in motion</p>
       </div>
 
       <style>{`

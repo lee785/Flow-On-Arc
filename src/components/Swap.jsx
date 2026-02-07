@@ -19,7 +19,7 @@ const Swap = () => {
   const signer = useEthersSigner();
   const { balances, fetchBalances } = useBalances(provider, address);
   const { prices: tokenPrices } = useTokenPrices(provider);
-  const { showTransaction } = useNotifications();
+  const { showTransaction, setIsBlurActive } = useNotifications();
 
   const [fromToken, setFromToken] = useState(SWAPPABLE_TOKENS[0]);
   const [toToken, setToToken] = useState(SWAPPABLE_TOKENS[1]);
@@ -103,6 +103,7 @@ const Swap = () => {
   const handleSwap = async () => {
     if (!isConnected || !signer || !fromAmount || !toAmount) return;
     setShowModal(true);
+    setIsBlurActive(true);
   };
 
   const handleApprove = async () => {
@@ -348,29 +349,7 @@ const Swap = () => {
                 </div>
               ) : null}
 
-              {/* Swap Size Info - Simplified (detailed reserves will be on Liquidity page) */}
-              {priceImpact && !priceImpact.error && priceImpact.swapSizePercent !== undefined && (
-                <div className="p-3 rounded-xl bg-[#1a1a1a] border border-[#2a2a2a]">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <TrendingUp className="w-4 h-4 text-[#5cb849]" />
-                      <span className="text-xs text-gray-400">Swap Size</span>
-                    </div>
-                    <span className={`text-xs font-medium ${priceImpact.swapSizePercent > 10 ? 'text-red-400' :
-                      priceImpact.swapSizePercent > 5 ? 'text-orange-400' :
-                        'text-green-400'
-                      }`}>
-                      {priceImpact.swapSizePercent > 0 ? priceImpact.swapSizePercent.toFixed(2) : '<0.01'}% of pool
-                    </span>
-                  </div>
-                  {priceImpact.liquidityDepth !== undefined && priceImpact.liquidityDepth > 0 && priceImpact.liquidityDepth < 1000 && (
-                    <p className="text-xs text-yellow-400 mt-2 flex items-start gap-1">
-                      <AlertTriangle className="w-3 h-3 mt-0.5 shrink-0" />
-                      <span>Low liquidity pool. Consider adding liquidity to improve swap rates for everyone.</span>
-                    </p>
-                  )}
-                </div>
-              )}
+
 
               {/* Exchange Rate - Show stable spot rate */}
               {spotExchangeRate !== null && spotExchangeRate !== undefined ? (
@@ -436,7 +415,10 @@ const Swap = () => {
       {/* Transaction Modal */}
       <TransactionModal
         isOpen={showModal}
-        onClose={() => setShowModal(false)}
+        onClose={() => {
+          setShowModal(false);
+          setIsBlurActive(false);
+        }}
         transactionType="swap"
         fromToken={fromToken}
         toToken={toToken}

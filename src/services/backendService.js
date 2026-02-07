@@ -90,7 +90,8 @@ export async function fetchBackendTransactions(limit = 50, offset = 0, type = nu
   let where = {};
   if (type) where.type = type;
 
-  const subgraphData = await querySubgraph(`
+  // Fetch both transactions AND protocol counts for accurate totals
+  const query = `
     query GetTransactions($limit: Int, $offset: Int, $where: Transaction_filter) {
       transactions(
         first: $limit, 
@@ -111,8 +112,19 @@ export async function fetchBackendTransactions(limit = 50, offset = 0, type = nu
         amountOut
         usdValue
       }
+      protocols(first: 1) {
+        totalTransactions
+        swapCount
+        supplyCount
+        withdrawCount
+        borrowCount
+        repayCount
+        claimCount
+      }
     }
-  `, { limit, offset, where });
+  `;
+
+  const subgraphData = await querySubgraph(query, { limit, offset, where });
 
   if (subgraphData && subgraphData.transactions) {
     const txs = subgraphData.transactions.map(tx => ({
@@ -125,9 +137,31 @@ export async function fetchBackendTransactions(limit = 50, offset = 0, type = nu
       explorerUrl: `https://arcscan.io/tx/${tx.txHash}`
     }));
 
+    // Map type to the correct count field
+    let total = 0;
+    if (subgraphData.protocols && subgraphData.protocols[0]) {
+      const p = subgraphData.protocols[0];
+      if (!type) {
+        total = parseInt(p.totalTransactions);
+      } else {
+        const countMap = {
+          'swap': 'swapCount',
+          'supply': 'supplyCount',
+          'withdraw': 'withdrawCount',
+          'borrow': 'borrowCount',
+          'repay': 'repayCount',
+          'claim': 'claimCount'
+        };
+        const field = countMap[type];
+        total = field ? parseInt(p[field]) : txs.length;
+      }
+    } else {
+      total = txs.length;
+    }
+
     return {
       transactions: txs,
-      total: txs.length < limit ? offset + txs.length : offset + limit + 100,
+      total,
       limit,
       offset,
     };
